@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offline Flashcards V5</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="site-shell">
+    <header class="site-header">
+      <div class="brand-block">
+        <div class="brand-mark">OF</div>
+        <div>
+          <h1>Offline Flashcards</h1>
+          <p>Calm local study with spaced repetition, images, and reliable backups.</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="quick-refresh" class="btn btn-secondary">Refresh</button>
+        <button id="quick-review-all" class="btn btn-primary">Start review</button>
+      </div>
+    </header>
+
+    <nav class="top-nav" aria-label="Primary">
+      <button class="nav-link active" data-view="dashboard">Dashboard</button>
+      <button class="nav-link" data-view="decks">Decks</button>
+      <button class="nav-link" data-view="review">Review</button>
+      <button class="nav-link" data-view="manage">Manage Cards</button>
+      <button class="nav-link" data-view="import-export">Import / Export</button>
+      <button class="nav-link" data-view="stats">Study Stats</button>
+      <button class="nav-link" data-view="settings">Settings</button>
+    </nav>
+
+    <main class="page-shell">
+      <section id="message-region" class="message-region" aria-live="polite"></section>
+
+      <section class="view active" id="view-dashboard">
+        <div class="hero-card">
+          <div>
+            <div class="eyebrow">Today at a glance</div>
+            <h2>Pick up where you left off.</h2>
+            <p id="dashboard-hero-copy">Your due cards, deck health, and recent study activity are all here.</p>
+          </div>
+          <div class="hero-actions">
+            <div class="metric-chip">
+              <span class="metric-chip-label">Due now</span>
+              <strong id="hero-due-now">0</strong>
+            </div>
+            <div class="metric-chip">
+              <span class="metric-chip-label">Due today</span>
+              <strong id="hero-due-today">0</strong>
+            </div>
+            <button id="dashboard-start-review" class="btn btn-primary btn-large">Review due cards</button>
+          </div>
+        </div>
+        <div class="stat-strip" id="dashboard-stat-cards"></div>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="eyebrow">Deck health</div>
+              <h3>Deck overview</h3>
+            </div>
+            <p class="panel-copy">Clean counts, current workload, and the decks that need attention.</p>
+          </div>
+          <div id="dashboard-deck-grid" class="deck-grid"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-decks">
+        <div class="split-layout split-layout-narrow-left">
+          <div class="panel sticky-panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">New deck</div>
+                <h3>Create a deck</h3>
+              </div>
+              <p class="panel-copy">Keep decks flat, readable, and easy to review.</p>
+            </div>
+            <form id="create-deck-form" class="stack-form">
+              <label>
+                Deck name
+                <input type="text" id="new-deck-name" maxlength="120" placeholder="e.g. Medicine Foundations" required />
+              </label>
+              <button type="submit" class="btn btn-primary">Create deck</button>
+            </form>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">Existing decks</div>
+                <h3>Manage decks</h3>
+              </div>
+              <p class="panel-copy">Rename cleanly, review faster, or delete with an explicit card-handling choice.</p>
+            </div>
+            <div id="deck-list" class="deck-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-review">
+        <div class="review-layout">
+          <div class="panel review-setup" id="review-setup-panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">Review setup</div>
+                <h3>Start a focused session</h3>
+              </div>
+              <p class="panel-copy">Learning and relearning cards appear first. New cards respect your daily limit.</p>
+            </div>
+            <div class="review-setup-grid">
+              <label>
+                Review scope
+                <select id="review-scope-select">
+                  <option value="all">All due cards</option>
+                </select>
+              </label>
+              <label>
+                New cards left today
+                <input type="text" id="review-new-limit-display" readonly />
+              </label>
+            </div>
+            <div class="pill-row compact-pills">
+              <span class="pill" id="review-scope-due-pill">Due now: 0</span>
+              <span class="pill" id="review-scope-today-pill">Due today: 0</span>
+              <span class="pill" id="review-scope-hidden-pill">Hidden new: 0</span>
+            </div>
+            <div class="review-setup-actions">
+              <button id="start-review-btn" class="btn btn-primary btn-large">Start review</button>
+              <p class="subtle-note">Space shows the answer. 1–4 rate the card. Z undoes the last rating.</p>
+            </div>
+          </div>
+
+          <div class="panel review-panel hidden" id="review-panel">
+            <div class="review-meta-row">
+              <div>
+                <div class="eyebrow" id="review-eyebrow">Reviewing</div>
+                <h3 id="review-deck-name">All due cards</h3>
+                <p id="review-session-meta" class="panel-copy">0 due cards left</p>
+              </div>
+              <div class="review-meta-pills">
+                <span class="pill" id="review-state-pill">State</span>
+                <span class="pill" id="review-due-pill">Due</span>
+                <span class="pill" id="review-progress-pill">Progress</span>
+              </div>
+            </div>
+            <div class="review-progress-track">
+              <div id="review-progress-bar" class="review-progress-bar"></div>
+            </div>
+            <div class="review-card-shell">
+              <article class="study-card">
+                <div class="card-face-label">Front</div>
+                <div id="review-question" class="study-card-content">Choose a scope and start a session.</div>
+                <div id="review-question-images" class="media-grid media-grid-large"></div>
+              </article>
+              <article id="review-answer-wrap" class="study-answer hidden">
+                <div class="card-face-label">Back</div>
+                <div id="review-answer" class="study-answer-content"></div>
+                <div id="review-answer-images" class="media-grid media-grid-large"></div>
+              </article>
+            </div>
+            <div id="show-answer-row" class="review-primary-action">
+              <button id="show-answer-btn" class="btn btn-primary btn-xl">Show answer</button>
+            </div>
+            <div id="rating-row" class="rating-grid hidden" aria-label="Rate card">
+              <button class="rating-btn rating-again" data-rating="again"><span class="rating-main">Again</span><span class="rating-preview" data-preview-for="again"></span><span class="rating-shortcut">1</span></button>
+              <button class="rating-btn rating-hard" data-rating="hard"><span class="rating-main">Hard</span><span class="rating-preview" data-preview-for="hard"></span><span class="rating-shortcut">2</span></button>
+              <button class="rating-btn rating-good" data-rating="good"><span class="rating-main">Good</span><span class="rating-preview" data-preview-for="good"></span><span class="rating-shortcut">3</span></button>
+              <button class="rating-btn rating-easy" data-rating="easy"><span class="rating-main">Easy</span><span class="rating-preview" data-preview-for="easy"></span><span class="rating-shortcut">4</span></button>
+            </div>
+            <div class="review-footer-actions">
+              <div class="button-row left-aligned">
+                <button id="undo-last-rating-btn" class="btn btn-secondary" disabled>Undo last rating</button>
+                <button id="suspend-current-card-btn" class="btn btn-secondary" disabled>Suspend card</button>
+                <button id="edit-current-card-btn" class="btn btn-secondary" disabled>Edit card</button>
+                <button id="end-review-btn" class="btn btn-ghost">End session</button>
+              </div>
+              <div class="shortcut-hint">Keyboard: Space = show answer · 1 2 3 4 = rate · Z = undo</div>
+            </div>
+          </div>
+
+          <div class="panel review-empty hidden" id="review-empty-panel">
+            <div class="panel-head compact-gap">
+              <div>
+                <div class="eyebrow">Nothing due right now</div>
+                <h3 id="review-empty-title">You’re caught up.</h3>
+              </div>
+              <p class="panel-copy" id="review-empty-subtitle">The next card will appear here automatically when it becomes due.</p>
+            </div>
+            <div class="empty-grid">
+              <div class="empty-stat">
+                <span class="empty-label">Next card due</span>
+                <strong id="review-next-due-relative">—</strong>
+                <span id="review-next-due-exact" class="empty-subtle">—</span>
+              </div>
+              <div class="empty-stat">
+                <span class="empty-label">Hidden new cards</span>
+                <strong id="review-hidden-new-count">0</strong>
+                <span class="empty-subtle">Respecting today’s limit</span>
+              </div>
+            </div>
+            <div class="button-row left-aligned">
+              <button id="review-empty-refresh-btn" class="btn btn-secondary">Refresh now</button>
+              <button id="review-empty-change-scope-btn" class="btn btn-ghost">Change scope</button>
+            </div>
+            <p id="review-empty-refresh-note" class="subtle-note">Auto-refreshing while you stay on this screen.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-manage">
+        <div class="split-layout split-layout-equal">
+          <div class="panel sticky-panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">Card editor</div>
+                <h3 id="card-form-title">Add card</h3>
+              </div>
+              <p class="panel-copy">Front, back, deck, tags, and images stay prominent. Scheduling stays tucked away.</p>
+            </div>
+            <form id="card-form" class="stack-form">
+              <input type="hidden" id="card-id" />
+              <label>
+                Deck
+                <select id="card-deck" required></select>
+              </label>
+              <label>
+                Front
+                <textarea id="card-question" rows="5" placeholder="Card front" required></textarea>
+              </label>
+              <div class="split-inline">
+                <div class="media-field">
+                  <div class="media-field-head">
+                    <span>Front images</span>
+                    <label class="upload-inline"><input id="card-front-images" type="file" accept="image/*" multiple />Add images</label>
+                  </div>
+                  <div class="dropzone" id="card-front-dropzone" data-side="front" tabindex="0">
+                    <div class="dropzone-text">Drop or paste images here</div>
+                    <div id="card-front-preview" class="media-grid"></div>
+                  </div>
+                </div>
+              </div>
+              <label>
+                Back
+                <textarea id="card-answer" rows="6" placeholder="Card back" required></textarea>
+              </label>
+              <div class="media-field">
+                <div class="media-field-head">
+                  <span>Back images</span>
+                  <label class="upload-inline"><input id="card-back-images" type="file" accept="image/*" multiple />Add images</label>
+                </div>
+                <div class="dropzone" id="card-back-dropzone" data-side="back" tabindex="0">
+                  <div class="dropzone-text">Drop or paste images here</div>
+                  <div id="card-back-preview" class="media-grid"></div>
+                </div>
+              </div>
+              <label>
+                Tags
+                <input id="card-tags" type="text" placeholder="Comma separated tags" />
+              </label>
+              <details id="card-advanced" class="advanced-panel">
+                <summary>Advanced scheduling</summary>
+                <div class="advanced-grid">
+                  <label>
+                    State
+                    <select id="card-state">
+                      <option value="new">new</option>
+                      <option value="learning">learning</option>
+                      <option value="review">review</option>
+                      <option value="relearning">relearning</option>
+                    </select>
+                  </label>
+                  <label>
+                    Due date
+                    <input id="card-due-at" type="datetime-local" />
+                  </label>
+                  <label>
+                    Interval days
+                    <input id="card-interval-days" type="number" min="0" step="1" />
+                  </label>
+                  <label>
+                    Ease factor
+                    <input id="card-ease-factor" type="number" min="1.3" step="0.05" />
+                  </label>
+                  <label>
+                    Reps
+                    <input id="card-reps" type="number" min="0" step="1" />
+                  </label>
+                  <label>
+                    Lapses
+                    <input id="card-lapses" type="number" min="0" step="1" />
+                  </label>
+                  <label>
+                    Last review interval
+                    <input id="card-last-review-interval" type="number" min="0" step="1" />
+                  </label>
+                  <label class="checkbox-row">
+                    <input id="card-suspended" type="checkbox" />
+                    Suspended
+                  </label>
+                </div>
+              </details>
+              <div class="button-row left-aligned">
+                <button id="card-form-save" type="submit" class="btn btn-primary">Save card</button>
+                <button id="card-form-reset" type="button" class="btn btn-secondary">Reset</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">Library</div>
+                <h3>Manage cards</h3>
+              </div>
+              <p class="panel-copy">Search cleanly, filter by deck or state, and run safe bulk actions.</p>
+            </div>
+            <div class="toolbar toolbar-grid">
+              <input id="manage-search" type="search" placeholder="Search front, back, or tags" />
+              <select id="manage-deck-filter"></select>
+              <select id="manage-suspend-filter">
+                <option value="all">All cards</option>
+                <option value="active">Active only</option>
+                <option value="suspended">Suspended only</option>
+              </select>
+            </div>
+            <div class="bulk-bar" id="manage-bulk-bar">
+              <span id="manage-selected-count">0 selected</span>
+              <div class="button-row left-aligned">
+                <select id="bulk-move-deck"></select>
+                <button id="bulk-move-btn" class="btn btn-secondary">Move</button>
+                <button id="bulk-suspend-btn" class="btn btn-secondary">Suspend</button>
+                <button id="bulk-unsuspend-btn" class="btn btn-secondary">Unsuspend</button>
+                <button id="bulk-reset-btn" class="btn btn-secondary">Reset scheduling</button>
+                <button id="bulk-delete-btn" class="btn btn-danger">Delete</button>
+              </div>
+            </div>
+            <div class="table-shell">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th class="checkbox-col"><input type="checkbox" id="manage-select-page" /></th>
+                    <th>Front</th>
+                    <th>Deck</th>
+                    <th>State</th>
+                    <th>Due</th>
+                    <th>Tags</th>
+                    <th>Media</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="manage-cards-table"></tbody>
+              </table>
+            </div>
+            <div id="manage-empty-state" class="empty-box hidden"></div>
+            <div id="manage-pagination" class="button-row pagination-row"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-import-export">
+        <div class="split-layout split-layout-narrow-left">
+          <div class="panel sticky-panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">Import cards</div>
+                <h3>Bring cards in safely</h3>
+              </div>
+              <p class="panel-copy">TXT uses <code>front;back</code>. CSV uses <code>front,back,deck,tags</code>. Duplicates are skipped, not fatal.</p>
+            </div>
+            <form id="import-form" class="stack-form">
+              <label>
+                Source file
+                <input id="import-file" type="file" accept=".txt,.csv,text/plain,text/csv" required />
+              </label>
+              <label>
+                Target deck (TXT only)
+                <select id="import-deck-select"></select>
+              </label>
+              <label>
+                Or create new deck while importing
+                <input id="import-new-deck-name" type="text" maxlength="120" placeholder="Optional new deck name" />
+              </label>
+              <button type="submit" class="btn btn-primary">Import cards</button>
+            </form>
+            <div id="import-summary" class="summary-box muted-box">No import run yet.</div>
+          </div>
+          <div class="panel stack-panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">Backup and restore</div>
+                <h3>Keep your data safe</h3>
+              </div>
+              <p class="panel-copy">Backups include decks, cards, review logs, settings, and images. Image-heavy backups can be large.</p>
+            </div>
+            <div class="summary-box">
+              <h4>Export full backup</h4>
+              <p class="panel-copy">Creates one JSON file with everything needed to restore this app exactly.</p>
+              <button id="export-backup-btn" class="btn btn-primary">Download backup</button>
+            </div>
+            <div class="summary-box danger-box">
+              <h4>Restore backup</h4>
+              <p class="panel-copy">Restore is validated before replacement and runs atomically. A safety backup is downloaded first.</p>
+              <input id="import-backup-file" type="file" accept=".json,application/json" />
+              <button id="import-backup-btn" class="btn btn-danger">Restore backup</button>
+            </div>
+            <div id="backup-summary" class="summary-box muted-box">No backup operation run yet.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-stats">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="eyebrow">Study progress</div>
+              <h3>Daily activity</h3>
+            </div>
+            <p class="panel-copy">Review logs are the source of truth for activity and deck progress.</p>
+          </div>
+          <div id="stats-top-strip" class="stat-strip"></div>
+          <div id="stats-daily-chart" class="daily-chart"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="eyebrow">By deck</div>
+              <h3>Per-deck progress</h3>
+            </div>
+            <p class="panel-copy">Mastery, workload, reviews, and last study time, deck by deck.</p>
+          </div>
+          <div class="table-shell">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Deck</th>
+                  <th>Total</th>
+                  <th>Due now</th>
+                  <th>Due today</th>
+                  <th>Completed today</th>
+                  <th>Reviews</th>
+                  <th>Lapses</th>
+                  <th>Mastery</th>
+                  <th>Last studied</th>
+                </tr>
+              </thead>
+              <tbody id="stats-deck-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-settings">
+        <div class="split-layout split-layout-narrow-left">
+          <div class="panel sticky-panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">Preferences</div>
+                <h3>Study settings</h3>
+              </div>
+              <p class="panel-copy">Keep defaults simple. Dangerous actions stay clearly separated.</p>
+            </div>
+            <div class="stack-form">
+              <label>
+                Theme
+                <select id="theme-select">
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </label>
+              <label>
+                New cards per day
+                <input id="new-cards-per-day" type="number" min="0" step="1" />
+              </label>
+              <button id="save-settings-btn" class="btn btn-primary">Save settings</button>
+            </div>
+          </div>
+          <div class="stack-panel">
+            <div class="panel">
+              <div class="panel-head compact-gap">
+                <div>
+                  <div class="eyebrow">Storage</div>
+                  <h3>Local data summary</h3>
+                </div>
+              </div>
+              <div id="storage-summary" class="storage-grid"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head compact-gap">
+                <div>
+                  <div class="eyebrow">Maintenance</div>
+                  <h3>Keep the library healthy</h3>
+                </div>
+              </div>
+              <div class="maintenance-list">
+                <div class="maintenance-row">
+                  <div>
+                    <h4>Seed sample data</h4>
+                    <p class="panel-copy">Adds two sample decks and eight cards for quick testing.</p>
+                  </div>
+                  <button id="seed-sample-data-btn" class="btn btn-secondary">Seed samples</button>
+                </div>
+                <div class="maintenance-row">
+                  <div>
+                    <h4>Delete orphaned media</h4>
+                    <p id="orphan-media-note" class="panel-copy">Checks the media store for images that are no longer referenced.</p>
+                  </div>
+                  <button id="cleanup-orphan-media-btn" class="btn btn-secondary">Clean orphan media</button>
+                </div>
+                <div class="maintenance-row">
+                  <div>
+                    <h4>Clear review logs</h4>
+                    <p class="panel-copy">Removes study history only. Cards and scheduling stay intact.</p>
+                  </div>
+                  <button id="clear-review-logs-btn" class="btn btn-secondary">Clear review logs</button>
+                </div>
+                <div class="maintenance-row danger-row">
+                  <div>
+                    <h4>Delete all local data</h4>
+                    <p class="panel-copy">Removes decks, cards, review logs, settings, and images from this browser.</p>
+                  </div>
+                  <button id="wipe-data-btn" class="btn btn-danger">Delete everything</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="confirm-dialog" class="confirm-dialog">
+    <form method="dialog" class="confirm-card">
+      <div class="eyebrow" id="confirm-eyebrow">Confirm</div>
+      <h3 id="confirm-title">Are you sure?</h3>
+      <p id="confirm-copy" class="panel-copy">This action cannot be undone.</p>
+      <div id="confirm-extra" class="stack-form"></div>
+      <div class="button-row right-aligned">
+        <button value="cancel" class="btn btn-secondary">Cancel</button>
+        <button id="confirm-submit" value="confirm" class="btn btn-danger">Confirm</button>
+      </div>
+    </form>
+  </dialog>
+
+  <section id="toast-region" class="toast-region" aria-live="polite"></section>
+
+  <script src="./db.js"></script>
+  <script src="./scheduler.js"></script>
+  <script src="./importer.js"></script>
+  <script src="./stats.js"></script>
+  <script src="./ui.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,4779 @@
+===== index.html =====
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offline Flashcards V5</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="site-shell">
+    <header class="site-header">
+      <div class="brand-block">
+        <div class="brand-mark">OF</div>
+        <div>
+          <h1>Offline Flashcards</h1>
+          <p>Calm local study with spaced repetition, images, and reliable backups.</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="quick-refresh" class="btn btn-secondary">Refresh</button>
+        <button id="quick-review-all" class="btn btn-primary">Start review</button>
+      </div>
+    </header>
+
+    <nav class="top-nav" aria-label="Primary">
+      <button class="nav-link active" data-view="dashboard">Dashboard</button>
+      <button class="nav-link" data-view="decks">Decks</button>
+      <button class="nav-link" data-view="review">Review</button>
+      <button class="nav-link" data-view="manage">Manage Cards</button>
+      <button class="nav-link" data-view="import-export">Import / Export</button>
+      <button class="nav-link" data-view="stats">Study Stats</button>
+      <button class="nav-link" data-view="settings">Settings</button>
+    </nav>
+
+    <main class="page-shell">
+      <section id="message-region" class="message-region" aria-live="polite"></section>
+
+      <section class="view active" id="view-dashboard">
+        <div class="hero-card">
+          <div>
+            <div class="eyebrow">Today at a glance</div>
+            <h2>Pick up where you left off.</h2>
+            <p id="dashboard-hero-copy">Your due cards, deck health, and recent study activity are all here.</p>
+          </div>
+          <div class="hero-actions">
+            <div class="metric-chip">
+              <span class="metric-chip-label">Due now</span>
+              <strong id="hero-due-now">0</strong>
+            </div>
+            <div class="metric-chip">
+              <span class="metric-chip-label">Due today</span>
+              <strong id="hero-due-today">0</strong>
+            </div>
+            <button id="dashboard-start-review" class="btn btn-primary btn-large">Review due cards</button>
+          </div>
+        </div>
+        <div class="stat-strip" id="dashboard-stat-cards"></div>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="eyebrow">Deck health</div>
+              <h3>Deck overview</h3>
+            </div>
+            <p class="panel-copy">Clean counts, current workload, and the decks that need attention.</p>
+          </div>
+          <div id="dashboard-deck-grid" class="deck-grid"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-decks">
+        <div class="split-layout split-layout-narrow-left">
+          <div class="panel sticky-panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">New deck</div>
+                <h3>Create a deck</h3>
+              </div>
+              <p class="panel-copy">Keep decks flat, readable, and easy to review.</p>
+            </div>
+            <form id="create-deck-form" class="stack-form">
+              <label>
+                Deck name
+                <input type="text" id="new-deck-name" maxlength="120" placeholder="e.g. Medicine Foundations" required />
+              </label>
+              <button type="submit" class="btn btn-primary">Create deck</button>
+            </form>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">Existing decks</div>
+                <h3>Manage decks</h3>
+              </div>
+              <p class="panel-copy">Rename cleanly, review faster, or delete with an explicit card-handling choice.</p>
+            </div>
+            <div id="deck-list" class="deck-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-review">
+        <div class="review-layout">
+          <div class="panel review-setup" id="review-setup-panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">Review setup</div>
+                <h3>Start a focused session</h3>
+              </div>
+              <p class="panel-copy">Learning and relearning cards appear first. New cards respect your daily limit.</p>
+            </div>
+            <div class="review-setup-grid">
+              <label>
+                Review scope
+                <select id="review-scope-select">
+                  <option value="all">All due cards</option>
+                </select>
+              </label>
+              <label>
+                New cards left today
+                <input type="text" id="review-new-limit-display" readonly />
+              </label>
+            </div>
+            <div class="pill-row compact-pills">
+              <span class="pill" id="review-scope-due-pill">Due now: 0</span>
+              <span class="pill" id="review-scope-today-pill">Due today: 0</span>
+              <span class="pill" id="review-scope-hidden-pill">Hidden new: 0</span>
+            </div>
+            <div class="review-setup-actions">
+              <button id="start-review-btn" class="btn btn-primary btn-large">Start review</button>
+              <p class="subtle-note">Space shows the answer. 1–4 rate the card. Z undoes the last rating.</p>
+            </div>
+          </div>
+
+          <div class="panel review-panel hidden" id="review-panel">
+            <div class="review-meta-row">
+              <div>
+                <div class="eyebrow" id="review-eyebrow">Reviewing</div>
+                <h3 id="review-deck-name">All due cards</h3>
+                <p id="review-session-meta" class="panel-copy">0 due cards left</p>
+              </div>
+              <div class="review-meta-pills">
+                <span class="pill" id="review-state-pill">State</span>
+                <span class="pill" id="review-due-pill">Due</span>
+                <span class="pill" id="review-progress-pill">Progress</span>
+              </div>
+            </div>
+            <div class="review-progress-track">
+              <div id="review-progress-bar" class="review-progress-bar"></div>
+            </div>
+            <div class="review-card-shell">
+              <article class="study-card">
+                <div class="card-face-label">Front</div>
+                <div id="review-question" class="study-card-content">Choose a scope and start a session.</div>
+                <div id="review-question-images" class="media-grid media-grid-large"></div>
+              </article>
+              <article id="review-answer-wrap" class="study-answer hidden">
+                <div class="card-face-label">Back</div>
+                <div id="review-answer" class="study-answer-content"></div>
+                <div id="review-answer-images" class="media-grid media-grid-large"></div>
+              </article>
+            </div>
+            <div id="show-answer-row" class="review-primary-action">
+              <button id="show-answer-btn" class="btn btn-primary btn-xl">Show answer</button>
+            </div>
+            <div id="rating-row" class="rating-grid hidden" aria-label="Rate card">
+              <button class="rating-btn rating-again" data-rating="again"><span class="rating-main">Again</span><span class="rating-preview" data-preview-for="again"></span><span class="rating-shortcut">1</span></button>
+              <button class="rating-btn rating-hard" data-rating="hard"><span class="rating-main">Hard</span><span class="rating-preview" data-preview-for="hard"></span><span class="rating-shortcut">2</span></button>
+              <button class="rating-btn rating-good" data-rating="good"><span class="rating-main">Good</span><span class="rating-preview" data-preview-for="good"></span><span class="rating-shortcut">3</span></button>
+              <button class="rating-btn rating-easy" data-rating="easy"><span class="rating-main">Easy</span><span class="rating-preview" data-preview-for="easy"></span><span class="rating-shortcut">4</span></button>
+            </div>
+            <div class="review-footer-actions">
+              <div class="button-row left-aligned">
+                <button id="undo-last-rating-btn" class="btn btn-secondary" disabled>Undo last rating</button>
+                <button id="suspend-current-card-btn" class="btn btn-secondary" disabled>Suspend card</button>
+                <button id="edit-current-card-btn" class="btn btn-secondary" disabled>Edit card</button>
+                <button id="end-review-btn" class="btn btn-ghost">End session</button>
+              </div>
+              <div class="shortcut-hint">Keyboard: Space = show answer · 1 2 3 4 = rate · Z = undo</div>
+            </div>
+          </div>
+
+          <div class="panel review-empty hidden" id="review-empty-panel">
+            <div class="panel-head compact-gap">
+              <div>
+                <div class="eyebrow">Nothing due right now</div>
+                <h3 id="review-empty-title">You’re caught up.</h3>
+              </div>
+              <p class="panel-copy" id="review-empty-subtitle">The next card will appear here automatically when it becomes due.</p>
+            </div>
+            <div class="empty-grid">
+              <div class="empty-stat">
+                <span class="empty-label">Next card due</span>
+                <strong id="review-next-due-relative">—</strong>
+                <span id="review-next-due-exact" class="empty-subtle">—</span>
+              </div>
+              <div class="empty-stat">
+                <span class="empty-label">Hidden new cards</span>
+                <strong id="review-hidden-new-count">0</strong>
+                <span class="empty-subtle">Respecting today’s limit</span>
+              </div>
+            </div>
+            <div class="button-row left-aligned">
+              <button id="review-empty-refresh-btn" class="btn btn-secondary">Refresh now</button>
+              <button id="review-empty-change-scope-btn" class="btn btn-ghost">Change scope</button>
+            </div>
+            <p id="review-empty-refresh-note" class="subtle-note">Auto-refreshing while you stay on this screen.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-manage">
+        <div class="split-layout split-layout-equal">
+          <div class="panel sticky-panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">Card editor</div>
+                <h3 id="card-form-title">Add card</h3>
+              </div>
+              <p class="panel-copy">Front, back, deck, tags, and images stay prominent. Scheduling stays tucked away.</p>
+            </div>
+            <form id="card-form" class="stack-form">
+              <input type="hidden" id="card-id" />
+              <label>
+                Deck
+                <select id="card-deck" required></select>
+              </label>
+              <label>
+                Front
+                <textarea id="card-question" rows="5" placeholder="Card front" required></textarea>
+              </label>
+              <div class="split-inline">
+                <div class="media-field">
+                  <div class="media-field-head">
+                    <span>Front images</span>
+                    <label class="upload-inline"><input id="card-front-images" type="file" accept="image/*" multiple />Add images</label>
+                  </div>
+                  <div class="dropzone" id="card-front-dropzone" data-side="front" tabindex="0">
+                    <div class="dropzone-text">Drop or paste images here</div>
+                    <div id="card-front-preview" class="media-grid"></div>
+                  </div>
+                </div>
+              </div>
+              <label>
+                Back
+                <textarea id="card-answer" rows="6" placeholder="Card back" required></textarea>
+              </label>
+              <div class="media-field">
+                <div class="media-field-head">
+                  <span>Back images</span>
+                  <label class="upload-inline"><input id="card-back-images" type="file" accept="image/*" multiple />Add images</label>
+                </div>
+                <div class="dropzone" id="card-back-dropzone" data-side="back" tabindex="0">
+                  <div class="dropzone-text">Drop or paste images here</div>
+                  <div id="card-back-preview" class="media-grid"></div>
+                </div>
+              </div>
+              <label>
+                Tags
+                <input id="card-tags" type="text" placeholder="Comma separated tags" />
+              </label>
+              <details id="card-advanced" class="advanced-panel">
+                <summary>Advanced scheduling</summary>
+                <div class="advanced-grid">
+                  <label>
+                    State
+                    <select id="card-state">
+                      <option value="new">new</option>
+                      <option value="learning">learning</option>
+                      <option value="review">review</option>
+                      <option value="relearning">relearning</option>
+                    </select>
+                  </label>
+                  <label>
+                    Due date
+                    <input id="card-due-at" type="datetime-local" />
+                  </label>
+                  <label>
+                    Interval days
+                    <input id="card-interval-days" type="number" min="0" step="1" />
+                  </label>
+                  <label>
+                    Ease factor
+                    <input id="card-ease-factor" type="number" min="1.3" step="0.05" />
+                  </label>
+                  <label>
+                    Reps
+                    <input id="card-reps" type="number" min="0" step="1" />
+                  </label>
+                  <label>
+                    Lapses
+                    <input id="card-lapses" type="number" min="0" step="1" />
+                  </label>
+                  <label>
+                    Last review interval
+                    <input id="card-last-review-interval" type="number" min="0" step="1" />
+                  </label>
+                  <label class="checkbox-row">
+                    <input id="card-suspended" type="checkbox" />
+                    Suspended
+                  </label>
+                </div>
+              </details>
+              <div class="button-row left-aligned">
+                <button id="card-form-save" type="submit" class="btn btn-primary">Save card</button>
+                <button id="card-form-reset" type="button" class="btn btn-secondary">Reset</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">Library</div>
+                <h3>Manage cards</h3>
+              </div>
+              <p class="panel-copy">Search cleanly, filter by deck or state, and run safe bulk actions.</p>
+            </div>
+            <div class="toolbar toolbar-grid">
+              <input id="manage-search" type="search" placeholder="Search front, back, or tags" />
+              <select id="manage-deck-filter"></select>
+              <select id="manage-suspend-filter">
+                <option value="all">All cards</option>
+                <option value="active">Active only</option>
+                <option value="suspended">Suspended only</option>
+              </select>
+            </div>
+            <div class="bulk-bar" id="manage-bulk-bar">
+              <span id="manage-selected-count">0 selected</span>
+              <div class="button-row left-aligned">
+                <select id="bulk-move-deck"></select>
+                <button id="bulk-move-btn" class="btn btn-secondary">Move</button>
+                <button id="bulk-suspend-btn" class="btn btn-secondary">Suspend</button>
+                <button id="bulk-unsuspend-btn" class="btn btn-secondary">Unsuspend</button>
+                <button id="bulk-reset-btn" class="btn btn-secondary">Reset scheduling</button>
+                <button id="bulk-delete-btn" class="btn btn-danger">Delete</button>
+              </div>
+            </div>
+            <div class="table-shell">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th class="checkbox-col"><input type="checkbox" id="manage-select-page" /></th>
+                    <th>Front</th>
+                    <th>Deck</th>
+                    <th>State</th>
+                    <th>Due</th>
+                    <th>Tags</th>
+                    <th>Media</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="manage-cards-table"></tbody>
+              </table>
+            </div>
+            <div id="manage-empty-state" class="empty-box hidden"></div>
+            <div id="manage-pagination" class="button-row pagination-row"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-import-export">
+        <div class="split-layout split-layout-narrow-left">
+          <div class="panel sticky-panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">Import cards</div>
+                <h3>Bring cards in safely</h3>
+              </div>
+              <p class="panel-copy">TXT uses <code>front;back</code>. CSV uses <code>front,back,deck,tags</code>. Duplicates are skipped, not fatal.</p>
+            </div>
+            <form id="import-form" class="stack-form">
+              <label>
+                Source file
+                <input id="import-file" type="file" accept=".txt,.csv,text/plain,text/csv" required />
+              </label>
+              <label>
+                Target deck (TXT only)
+                <select id="import-deck-select"></select>
+              </label>
+              <label>
+                Or create new deck while importing
+                <input id="import-new-deck-name" type="text" maxlength="120" placeholder="Optional new deck name" />
+              </label>
+              <button type="submit" class="btn btn-primary">Import cards</button>
+            </form>
+            <div id="import-summary" class="summary-box muted-box">No import run yet.</div>
+          </div>
+          <div class="panel stack-panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">Backup and restore</div>
+                <h3>Keep your data safe</h3>
+              </div>
+              <p class="panel-copy">Backups include decks, cards, review logs, settings, and images. Image-heavy backups can be large.</p>
+            </div>
+            <div class="summary-box">
+              <h4>Export full backup</h4>
+              <p class="panel-copy">Creates one JSON file with everything needed to restore this app exactly.</p>
+              <button id="export-backup-btn" class="btn btn-primary">Download backup</button>
+            </div>
+            <div class="summary-box danger-box">
+              <h4>Restore backup</h4>
+              <p class="panel-copy">Restore is validated before replacement and runs atomically. A safety backup is downloaded first.</p>
+              <input id="import-backup-file" type="file" accept=".json,application/json" />
+              <button id="import-backup-btn" class="btn btn-danger">Restore backup</button>
+            </div>
+            <div id="backup-summary" class="summary-box muted-box">No backup operation run yet.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-stats">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="eyebrow">Study progress</div>
+              <h3>Daily activity</h3>
+            </div>
+            <p class="panel-copy">Review logs are the source of truth for activity and deck progress.</p>
+          </div>
+          <div id="stats-top-strip" class="stat-strip"></div>
+          <div id="stats-daily-chart" class="daily-chart"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="eyebrow">By deck</div>
+              <h3>Per-deck progress</h3>
+            </div>
+            <p class="panel-copy">Mastery, workload, reviews, and last study time, deck by deck.</p>
+          </div>
+          <div class="table-shell">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Deck</th>
+                  <th>Total</th>
+                  <th>Due now</th>
+                  <th>Due today</th>
+                  <th>Completed today</th>
+                  <th>Reviews</th>
+                  <th>Lapses</th>
+                  <th>Mastery</th>
+                  <th>Last studied</th>
+                </tr>
+              </thead>
+              <tbody id="stats-deck-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-settings">
+        <div class="split-layout split-layout-narrow-left">
+          <div class="panel sticky-panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">Preferences</div>
+                <h3>Study settings</h3>
+              </div>
+              <p class="panel-copy">Keep defaults simple. Dangerous actions stay clearly separated.</p>
+            </div>
+            <div class="stack-form">
+              <label>
+                Theme
+                <select id="theme-select">
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </label>
+              <label>
+                New cards per day
+                <input id="new-cards-per-day" type="number" min="0" step="1" />
+              </label>
+              <button id="save-settings-btn" class="btn btn-primary">Save settings</button>
+            </div>
+          </div>
+          <div class="stack-panel">
+            <div class="panel">
+              <div class="panel-head compact-gap">
+                <div>
+                  <div class="eyebrow">Storage</div>
+                  <h3>Local data summary</h3>
+                </div>
+              </div>
+              <div id="storage-summary" class="storage-grid"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head compact-gap">
+                <div>
+                  <div class="eyebrow">Maintenance</div>
+                  <h3>Keep the library healthy</h3>
+                </div>
+              </div>
+              <div class="maintenance-list">
+                <div class="maintenance-row">
+                  <div>
+                    <h4>Seed sample data</h4>
+                    <p class="panel-copy">Adds two sample decks and eight cards for quick testing.</p>
+                  </div>
+                  <button id="seed-sample-data-btn" class="btn btn-secondary">Seed samples</button>
+                </div>
+                <div class="maintenance-row">
+                  <div>
+                    <h4>Delete orphaned media</h4>
+                    <p id="orphan-media-note" class="panel-copy">Checks the media store for images that are no longer referenced.</p>
+                  </div>
+                  <button id="cleanup-orphan-media-btn" class="btn btn-secondary">Clean orphan media</button>
+                </div>
+                <div class="maintenance-row">
+                  <div>
+                    <h4>Clear review logs</h4>
+                    <p class="panel-copy">Removes study history only. Cards and scheduling stay intact.</p>
+                  </div>
+                  <button id="clear-review-logs-btn" class="btn btn-secondary">Clear review logs</button>
+                </div>
+                <div class="maintenance-row danger-row">
+                  <div>
+                    <h4>Delete all local data</h4>
+                    <p class="panel-copy">Removes decks, cards, review logs, settings, and images from this browser.</p>
+                  </div>
+                  <button id="wipe-data-btn" class="btn btn-danger">Delete everything</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="confirm-dialog" class="confirm-dialog">
+    <form method="dialog" class="confirm-card">
+      <div class="eyebrow" id="confirm-eyebrow">Confirm</div>
+      <h3 id="confirm-title">Are you sure?</h3>
+      <p id="confirm-copy" class="panel-copy">This action cannot be undone.</p>
+      <div id="confirm-extra" class="stack-form"></div>
+      <div class="button-row right-aligned">
+        <button value="cancel" class="btn btn-secondary">Cancel</button>
+        <button id="confirm-submit" value="confirm" class="btn btn-danger">Confirm</button>
+      </div>
+    </form>
+  </dialog>
+
+  <section id="toast-region" class="toast-region" aria-live="polite"></section>
+
+  <script src="./db.js"></script>
+  <script src="./scheduler.js"></script>
+  <script src="./importer.js"></script>
+  <script src="./stats.js"></script>
+  <script src="./ui.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
+
+
+===== styles.css =====
+:root {
+  --bg: #f6f7fb;
+  --bg-soft: #fbfcfe;
+  --surface: #ffffff;
+  --surface-muted: #f3f5f9;
+  --surface-strong: #edf2f8;
+  --text: #1d2433;
+  --text-soft: #5b6578;
+  --text-faint: #7a8395;
+  --border: #dce3ee;
+  --border-strong: #c8d2e1;
+  --primary: #316cff;
+  --primary-soft: #eef4ff;
+  --success: #23855a;
+  --danger: #d14d55;
+  --warning: #b17817;
+  --shadow: 0 18px 40px rgba(16, 24, 40, 0.07);
+  --radius-xl: 24px;
+  --radius-lg: 18px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+  --site-width: 1240px;
+  --focus: 0 0 0 3px rgba(49, 108, 255, 0.18);
+  color-scheme: light;
+}
+body.dark-theme {
+  --bg: #11151c;
+  --bg-soft: #171c24;
+  --surface: #1b222c;
+  --surface-muted: #202834;
+  --surface-strong: #26303d;
+  --text: #ecf2fb;
+  --text-soft: #b1bdd1;
+  --text-faint: #8e9ab0;
+  --border: #2d3746;
+  --border-strong: #445166;
+  --primary: #6ea0ff;
+  --primary-soft: rgba(110, 160, 255, 0.14);
+  --success: #4dba87;
+  --danger: #f07078;
+  --warning: #ffbf5d;
+  --shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--bg-soft), var(--bg));
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.45;
+}
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: 0.58; }
+input, select, textarea {
+  width: 100%;
+  padding: 0.86rem 0.95rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+textarea { resize: vertical; min-height: 110px; }
+input:focus, select:focus, textarea:focus, button:focus-visible, summary:focus-visible, .dropzone:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+  border-color: var(--primary);
+}
+code {
+  padding: 0.1rem 0.35rem;
+  border-radius: 8px;
+  background: var(--surface-muted);
+  font-size: 0.92em;
+}
+.hidden { display: none !important; }
+
+.site-shell {
+  max-width: var(--site-width);
+  margin: 0 auto;
+  padding: 28px 20px 48px;
+}
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.brand-block { display: flex; align-items: center; gap: 16px; }
+.brand-mark {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--primary), #8bb0ff);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  box-shadow: var(--shadow);
+}
+.brand-block h1 { margin: 0; font-size: 1.32rem; }
+.brand-block p { margin: 0.15rem 0 0; color: var(--text-soft); }
+.header-actions, .button-row, .pill-row, .action-cell, .review-meta-pills, .review-footer-actions, .maintenance-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.left-aligned { justify-content: flex-start; }
+.right-aligned { justify-content: flex-end; }
+.top-nav {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.nav-link {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-soft);
+  padding: 0.72rem 1rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.nav-link.active {
+  background: var(--primary-soft);
+  border-color: rgba(49,108,255,0.24);
+  color: var(--primary);
+}
+
+.page-shell { display: grid; gap: 22px; }
+.view { display: none; gap: 22px; }
+.view.active { display: grid; }
+.panel, .hero-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow);
+}
+.panel { padding: 22px; }
+.hero-card {
+  padding: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+.eyebrow {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.hero-card h2, .panel h3, .summary-box h4, .maintenance-row h4 { margin: 0.3rem 0 0.45rem; }
+.hero-card p, .panel-copy, .subtle-note, .table-muted { color: var(--text-soft); }
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.metric-chip {
+  min-width: 122px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-muted);
+  padding: 0.95rem 1rem;
+}
+.metric-chip strong { display: block; font-size: 1.45rem; margin-top: 0.25rem; }
+.metric-chip-label, .empty-label { font-size: 0.84rem; color: var(--text-faint); }
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+.stat-card strong { display: block; font-size: 1.5rem; margin-top: 0.35rem; }
+.stat-label { color: var(--text-faint); font-size: 0.82rem; }
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.compact-gap { margin-bottom: 14px; }
+.deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+.deck-card, .summary-box, .empty-stat, .empty-box {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-muted);
+  padding: 18px;
+}
+.deck-card { display: grid; gap: 14px; }
+.deck-card h4 { margin: 0; }
+.deck-card-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.deck-card-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+}
+.deck-card-stat strong { display: block; font-size: 1.08rem; margin-top: 0.2rem; }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text-soft);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.compact-pills { margin-top: 10px; }
+.split-layout { display: grid; gap: 22px; }
+.split-layout-narrow-left { grid-template-columns: minmax(280px, 380px) minmax(0, 1fr); }
+.split-layout-equal { grid-template-columns: minmax(320px, 420px) minmax(0, 1fr); }
+.sticky-panel { position: sticky; top: 18px; align-self: start; }
+.stack-form, .stack-panel, .maintenance-list { display: grid; gap: 14px; }
+.toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.toolbar-grid { display: grid; grid-template-columns: minmax(220px, 1.7fr) minmax(180px, 1fr) minmax(180px, 1fr); }
+.muted-box { color: var(--text-soft); }
+.danger-box { border-color: rgba(209,77,85,0.34); background: rgba(209,77,85,0.06); }
+
+.btn {
+  border: 1px solid transparent;
+  border-radius: 14px;
+  padding: 0.82rem 1rem;
+  font-weight: 700;
+  transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+}
+.btn:hover:not(:disabled) { transform: translateY(-1px); }
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 10px 24px rgba(49,108,255,0.22);
+}
+.btn-secondary {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+}
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-soft);
+}
+.btn-danger {
+  background: var(--danger);
+  color: white;
+  box-shadow: 0 10px 24px rgba(209,77,85,0.2);
+}
+.btn-large { padding-inline: 1.2rem; }
+.btn-xl { padding: 1rem 1.4rem; font-size: 1rem; }
+
+.review-layout { display: grid; gap: 18px; }
+.review-setup-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.review-setup-actions { margin-top: 14px; display: grid; gap: 10px; }
+.review-meta-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.review-progress-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+.review-progress-bar {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary), #82a7ff);
+  transition: width .18s ease;
+}
+.review-card-shell { display: grid; gap: 16px; }
+.study-card, .study-answer {
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: var(--surface-muted);
+  padding: 24px;
+  min-height: 180px;
+  display: grid;
+  gap: 14px;
+}
+.card-face-label { color: var(--text-faint); font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+.study-card-content, .study-answer-content { font-size: 1.26rem; line-height: 1.55; white-space: pre-wrap; }
+.review-primary-action { display: flex; justify-content: center; margin-top: 12px; }
+.rating-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+.rating-btn {
+  border-radius: 18px;
+  padding: 14px 12px;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  color: white;
+  border: 0;
+}
+.rating-main { font-weight: 700; font-size: 1rem; }
+.rating-preview { font-size: 0.85rem; opacity: 0.92; }
+.rating-shortcut { font-size: 0.76rem; opacity: 0.75; }
+.rating-again { background: #c74e55; }
+.rating-hard { background: #b37b20; }
+.rating-good { background: #316cff; }
+.rating-easy { background: #23855a; }
+.shortcut-hint { color: var(--text-faint); font-size: 0.86rem; }
+.empty-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.empty-stat strong { display: block; margin-top: 0.35rem; font-size: 1.25rem; }
+.empty-subtle { display: block; margin-top: 0.35rem; color: var(--text-soft); }
+
+.media-field { display: grid; gap: 8px; }
+.media-field-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.upload-inline {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  font-weight: 600;
+  overflow: hidden;
+}
+.upload-inline input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.dropzone {
+  min-height: 124px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(49,108,255,0.04), transparent), var(--surface-muted);
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+.dropzone.is-dragover {
+  border-color: var(--primary);
+  background: linear-gradient(180deg, rgba(49,108,255,0.08), transparent), var(--surface-muted);
+}
+.dropzone-text { color: var(--text-faint); font-size: 0.9rem; }
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 10px;
+}
+.media-grid-large { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.media-thumb {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  aspect-ratio: 1 / 1;
+}
+.media-grid-large .media-thumb { aspect-ratio: 4 / 3; }
+.media-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.media-thumb button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: 0;
+  border-radius: 999px;
+  width: 28px;
+  height: 28px;
+  background: rgba(13, 20, 33, 0.75);
+  color: white;
+}
+.media-meta {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  border-radius: 10px;
+  padding: 0.35rem 0.5rem;
+  background: rgba(13, 20, 33, 0.72);
+  color: white;
+  font-size: 0.72rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.advanced-panel {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-muted);
+  padding: 14px 16px;
+}
+.advanced-panel summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+.advanced-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.checkbox-row { display: flex; align-items: center; gap: 10px; }
+.checkbox-row input { width: auto; }
+.split-inline { display: grid; gap: 12px; }
+
+.bulk-bar {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-muted);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.table-shell { overflow: auto; }
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 860px;
+}
+.data-table th, .data-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  text-align: left;
+}
+.data-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
+  font-size: 0.84rem;
+  color: var(--text-faint);
+}
+.data-table tbody tr:hover { background: rgba(49,108,255,0.04); }
+.checkbox-col { width: 40px; }
+.table-title { font-weight: 700; margin-bottom: 4px; }
+.badge-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.26rem 0.56rem;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+.tag.status-new { color: var(--primary); }
+.tag.status-learning, .tag.status-relearning { color: var(--warning); }
+.tag.status-review { color: var(--success); }
+.empty-box {
+  color: var(--text-soft);
+  text-align: center;
+}
+.pagination-row { justify-content: space-between; }
+.deck-list { display: grid; gap: 14px; }
+.deck-list-item {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-muted);
+  padding: 18px;
+}
+.deck-list-meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.daily-chart {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(52px, 1fr));
+  gap: 12px;
+  align-items: end;
+  min-height: 200px;
+}
+.day-bar {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+.day-bar-fill {
+  width: 100%;
+  min-height: 8px;
+  border-radius: 14px 14px 6px 6px;
+  background: linear-gradient(180deg, #7ca4ff, var(--primary));
+}
+.day-bar-label { font-size: 0.76rem; color: var(--text-faint); }
+.day-bar-value { font-size: 0.82rem; font-weight: 700; }
+.storage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.storage-card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-muted);
+  padding: 14px;
+}
+.storage-card strong { display: block; font-size: 1.35rem; margin-top: 0.35rem; }
+.maintenance-row {
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.maintenance-row:last-child { border-bottom: 0; }
+.danger-row h4 { color: var(--danger); }
+.confirm-dialog {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+}
+.confirm-dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
+.confirm-card {
+  min-width: min(520px, calc(100vw - 40px));
+  background: var(--surface);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  padding: 24px;
+}
+.toast-region {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  display: grid;
+  gap: 10px;
+  z-index: 30;
+}
+.toast {
+  min-width: 280px;
+  max-width: 380px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 14px 16px;
+}
+.toast.success { border-color: rgba(35,133,90,0.3); }
+.toast.error { border-color: rgba(209,77,85,0.34); }
+.message-region { min-height: 0; }
+.message-banner {
+  border-radius: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.message-banner.success { border-color: rgba(35,133,90,0.32); }
+.message-banner.error { border-color: rgba(209,77,85,0.34); }
+.message-banner.info { border-color: rgba(49,108,255,0.24); }
+
+@media (max-width: 980px) {
+  .split-layout-narrow-left, .split-layout-equal, .review-setup-grid, .advanced-grid, .toolbar-grid, .empty-grid {
+    grid-template-columns: 1fr;
+  }
+  .sticky-panel { position: static; }
+  .hero-card, .site-header, .review-meta-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .rating-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .site-shell { padding-inline: 14px; }
+  .panel, .hero-card { padding: 18px; }
+  .top-nav { gap: 8px; }
+  .nav-link { padding-inline: 0.84rem; }
+  .rating-grid { grid-template-columns: 1fr; }
+  .media-grid-large { grid-template-columns: 1fr; }
+}
+
+
+===== app.js =====
+(function () {
+  function getDefaultReviewSession() {
+    return {
+      mode: 'setup',
+      deckId: 'all',
+      deckName: 'All due cards',
+      scopeLabel: 'Reviewing',
+      answerShown: false,
+      card: null,
+      queue: [],
+      remainingCount: 0,
+      reviewedCount: 0,
+      totalCount: 0,
+      hiddenNewCount: 0,
+      nextDueAt: null,
+      frontMedia: [],
+      backMedia: [],
+      shownAt: null,
+      busy: false,
+      lastReviewAction: null,
+      previews: null,
+    };
+  }
+
+  function makeDraftItem({ mediaId, name, blob, existing }) {
+    return {
+      localId: `${mediaId}_${Math.random().toString(36).slice(2, 8)}`,
+      mediaId,
+      name,
+      blob,
+      objectUrl: window.UI.trackUrl(blob),
+      existing: !!existing,
+    };
+  }
+
+  const App = {
+    state: {
+      currentView: 'dashboard',
+      decks: [],
+      dashboard: null,
+      storage: { deckCount: 0, cardCount: 0, reviewLogCount: 0, metaCount: 0, mediaCount: 0 },
+      settings: { theme: 'light', newCardsPerDay: 20 },
+      reviewSession: getDefaultReviewSession(),
+      reviewRefreshTimer: null,
+      manageSearchTimer: null,
+      manageState: {
+        page: 1,
+        pageSize: 20,
+        search: '',
+        deckFilter: '',
+        suspendFilter: 'all',
+        selectedIds: new Set(),
+        editingCardId: null,
+        currentItems: [],
+      },
+      cardEditorMedia: { front: [], back: [] },
+    },
+
+    async init() {
+      try {
+        await window.DB.ensureDefaultDeck();
+        this.bindEvents();
+        await this.loadSettings();
+        await this.refreshBaseData();
+        await this.switchView('dashboard');
+        window.UI.showMessage('Offline Flashcards V5 is ready. Everything stays local to this browser until you export a backup.', 'success');
+      } catch (error) {
+        console.error(error);
+        window.UI.showMessage(error.message || 'Failed to initialize the app.', 'error');
+      }
+    },
+
+    bindEvents() {
+      document.querySelectorAll('.nav-link').forEach((button) => {
+        button.addEventListener('click', () => this.switchView(button.dataset.view));
+      });
+      document.getElementById('quick-refresh').addEventListener('click', () => this.refreshCurrentView(true));
+      document.getElementById('quick-review-all').addEventListener('click', () => this.launchReviewForScope('all'));
+      document.getElementById('dashboard-start-review').addEventListener('click', () => this.launchReviewForScope('all'));
+
+      document.getElementById('create-deck-form').addEventListener('submit', (event) => this.handleCreateDeck(event));
+      document.getElementById('deck-list').addEventListener('click', (event) => this.handleDeckListClick(event));
+      document.getElementById('dashboard-deck-grid').addEventListener('click', (event) => {
+        const button = event.target.closest('[data-review-deck]');
+        if (button) this.launchReviewForScope(button.dataset.reviewDeck);
+      });
+
+      document.getElementById('review-scope-select').addEventListener('change', () => this.prepareReviewSetup());
+      document.getElementById('start-review-btn').addEventListener('click', () => this.startReview());
+      document.getElementById('show-answer-btn').addEventListener('click', () => this.showAnswer());
+      document.getElementById('end-review-btn').addEventListener('click', () => this.endReview(true));
+      document.getElementById('undo-last-rating-btn').addEventListener('click', () => this.undoLastRating());
+      document.getElementById('suspend-current-card-btn').addEventListener('click', () => this.suspendCurrentReviewCard());
+      document.getElementById('edit-current-card-btn').addEventListener('click', () => this.editCurrentReviewCard());
+      document.getElementById('review-empty-refresh-btn').addEventListener('click', () => this.refreshReviewEmptyState(false));
+      document.getElementById('review-empty-change-scope-btn').addEventListener('click', () => this.endReview(false));
+      document.querySelectorAll('.rating-btn').forEach((button) => button.addEventListener('click', () => this.rateCurrentCard(button.dataset.rating)));
+
+      document.getElementById('card-form').addEventListener('submit', (event) => this.handleCardSave(event));
+      document.getElementById('card-form-reset').addEventListener('click', () => this.resetCardEditor());
+      document.getElementById('card-front-preview').addEventListener('click', (event) => this.handleDraftImageRemove(event, 'front'));
+      document.getElementById('card-back-preview').addEventListener('click', (event) => this.handleDraftImageRemove(event, 'back'));
+      document.getElementById('card-front-images').addEventListener('change', (event) => this.addDraftImages('front', event.target.files));
+      document.getElementById('card-back-images').addEventListener('change', (event) => this.addDraftImages('back', event.target.files));
+      ['card-front-dropzone', 'card-back-dropzone'].forEach((id) => this.bindDropzone(id));
+
+      document.getElementById('manage-search').addEventListener('input', () => {
+        clearTimeout(this.state.manageSearchTimer);
+        this.state.manageSearchTimer = window.setTimeout(() => {
+          this.state.manageState.page = 1;
+          this.renderManageView();
+        }, 180);
+      });
+      document.getElementById('manage-deck-filter').addEventListener('change', () => {
+        this.state.manageState.page = 1;
+        this.renderManageView();
+      });
+      document.getElementById('manage-suspend-filter').addEventListener('change', () => {
+        this.state.manageState.page = 1;
+        this.renderManageView();
+      });
+      document.getElementById('manage-pagination').addEventListener('click', (event) => this.handleManagePagination(event));
+      document.getElementById('manage-cards-table').addEventListener('click', (event) => this.handleManageTableClick(event));
+      document.getElementById('manage-cards-table').addEventListener('change', (event) => this.handleManageTableChange(event));
+      document.getElementById('manage-select-page').addEventListener('change', (event) => this.handleSelectPage(event));
+      document.getElementById('bulk-move-btn').addEventListener('click', () => this.bulkMoveCards());
+      document.getElementById('bulk-suspend-btn').addEventListener('click', () => this.bulkSuspendCards(true));
+      document.getElementById('bulk-unsuspend-btn').addEventListener('click', () => this.bulkSuspendCards(false));
+      document.getElementById('bulk-reset-btn').addEventListener('click', () => this.bulkResetScheduling());
+      document.getElementById('bulk-delete-btn').addEventListener('click', () => this.bulkDeleteCards());
+
+      document.getElementById('import-form').addEventListener('submit', (event) => this.handleImport(event));
+      document.getElementById('export-backup-btn').addEventListener('click', () => this.handleExportBackup());
+      document.getElementById('import-backup-btn').addEventListener('click', () => this.handleRestoreBackup());
+
+      document.getElementById('save-settings-btn').addEventListener('click', () => this.saveSettings());
+      document.getElementById('seed-sample-data-btn').addEventListener('click', () => this.seedSampleData());
+      document.getElementById('cleanup-orphan-media-btn').addEventListener('click', () => this.cleanupOrphanMedia());
+      document.getElementById('clear-review-logs-btn').addEventListener('click', () => this.clearReviewLogs());
+      document.getElementById('wipe-data-btn').addEventListener('click', () => this.wipeData());
+
+      document.addEventListener('keydown', (event) => this.handleGlobalKeys(event));
+    },
+
+    async loadSettings() {
+      const [theme, newCardsPerDay] = await Promise.all([
+        window.DB.getSetting('theme', 'light'),
+        window.DB.getSetting('newCardsPerDay', 20),
+      ]);
+      this.state.settings.theme = theme === 'dark' ? 'dark' : 'light';
+      this.state.settings.newCardsPerDay = Math.max(0, Number(newCardsPerDay || 20));
+      window.UI.setTheme(this.state.settings.theme);
+      document.getElementById('new-cards-per-day').value = this.state.settings.newCardsPerDay;
+    },
+
+    async refreshBaseData() {
+      const [decks, dashboard, storage] = await Promise.all([
+        window.DB.listDecks(),
+        window.DB.getDashboardSnapshot(),
+        window.DB.getStorageSummary(),
+      ]);
+      this.state.decks = decks;
+      this.state.dashboard = dashboard;
+      this.state.storage = storage;
+      window.UI.renderDashboard(dashboard);
+      window.UI.renderDeckList(decks, dashboard.perDeck);
+      window.UI.renderStorageSummary(storage);
+      window.UI.fillDeckSelect('review-scope-select', decks, { includeAll: true, allLabel: 'All due cards' });
+      window.UI.fillDeckSelect('manage-deck-filter', decks, { includeAll: true, allLabel: 'All decks' });
+      window.UI.fillDeckSelect('bulk-move-deck', decks, { includeNone: true, noneLabel: 'Move selected to…' });
+      window.UI.fillDeckSelect('import-deck-select', decks, { includeNone: true, noneLabel: 'Choose target deck' });
+      await this.refreshReviewOverview();
+      await this.populateEditorFromCurrentState();
+    },
+
+    async switchView(view) {
+      if (this.state.currentView === 'manage' && view !== 'manage') {
+        await this.releaseUnusedDraftMedia();
+        this.state.cardEditorMedia = { front: [], back: [] };
+        this.state.manageState.editingCardId = null;
+      }
+      this.state.currentView = view;
+      window.UI.setActiveView(view);
+      await this.refreshCurrentView(true);
+    },
+
+    async refreshCurrentView(force) {
+      if (force) await this.refreshBaseData();
+      if (this.state.currentView === 'review') {
+        await this.refreshReviewOverview();
+      }
+      if (this.state.currentView === 'manage') {
+        await this.renderManageView();
+      }
+      if (this.state.currentView === 'stats') {
+        await this.renderStatsView();
+      }
+      if (this.state.currentView === 'settings') {
+        await this.refreshSettingsView();
+      }
+    },
+
+    async refreshSettingsView() {
+      const orphans = await window.DB.findOrphanMediaIds();
+      document.getElementById('orphan-media-note').textContent = `${orphans.length} orphan image${orphans.length === 1 ? '' : 's'} currently unused.`;
+    },
+
+    async handleCreateDeck(event) {
+      event.preventDefault();
+      const input = document.getElementById('new-deck-name');
+      try {
+        const deck = await window.DB.createDeck(input.value);
+        input.value = '';
+        await this.refreshBaseData();
+        window.UI.toast(`Deck created: ${deck.name}`, 'success');
+      } catch (error) {
+        window.UI.toast(error.message || 'Failed to create deck.', 'error');
+      }
+    },
+
+    async handleDeckListClick(event) {
+      const review = event.target.closest('[data-review-deck]');
+      if (review) {
+        this.launchReviewForScope(review.dataset.reviewDeck);
+        return;
+      }
+      const rename = event.target.closest('[data-rename-deck]');
+      if (rename) {
+        const deck = this.state.decks.find((item) => item.id === rename.dataset.renameDeck);
+        if (!deck) return;
+        const result = await window.UI.showConfirm({
+          eyebrow: 'Rename deck',
+          title: deck.name,
+          copy: 'Choose a new unique deck name. Cards and review logs will follow the rename.',
+          confirmLabel: 'Save rename',
+          confirmVariant: 'primary',
+          extraHTML: `<label>New name<input name="newName" type="text" maxlength="120" value="${window.UI.esc(deck.name)}" required /></label>`,
+        });
+        if (!result.confirmed) return;
+        const newName = String(result.formData.get('newName') || '').trim();
+        try {
+          await window.DB.renameDeck(deck.id, newName);
+          await this.refreshBaseData();
+          await this.renderManageView();
+          window.UI.toast('Deck renamed.', 'success');
+        } catch (error) {
+          window.UI.toast(error.message || 'Failed to rename deck.', 'error');
+        }
+        return;
+      }
+      const del = event.target.closest('[data-delete-deck]');
+      if (del) {
+        const deck = this.state.decks.find((item) => item.id === del.dataset.deleteDeck);
+        if (!deck) return;
+        const result = await window.UI.showConfirm({
+          eyebrow: 'Delete deck',
+          title: deck.name,
+          copy: 'Choose whether to move existing cards to Default or delete the cards too.',
+          confirmLabel: 'Delete deck',
+          extraHTML: `
+            <label><input type="radio" name="deckDeleteMode" value="move-to-default" checked /> Move cards to Default</label>
+            <label><input type="radio" name="deckDeleteMode" value="delete-cards" /> Delete cards in this deck too</label>
+          `,
+        });
+        if (!result.confirmed) return;
+        const mode = String(result.formData.get('deckDeleteMode') || 'move-to-default');
+        try {
+          await window.DB.deleteDeck(deck.id, mode);
+          await this.refreshBaseData();
+          await this.renderManageView();
+          window.UI.toast('Deck deleted.', 'success');
+        } catch (error) {
+          window.UI.toast(error.message || 'Failed to delete deck.', 'error');
+        }
+      }
+    },
+
+    bindDropzone(id) {
+      const node = document.getElementById(id);
+      if (!node) return;
+      const side = node.dataset.side;
+      ['dragenter', 'dragover'].forEach((type) => node.addEventListener(type, (event) => {
+        event.preventDefault();
+        node.classList.add('is-dragover');
+      }));
+      ['dragleave', 'dragend', 'drop'].forEach((type) => node.addEventListener(type, (event) => {
+        event.preventDefault();
+        node.classList.remove('is-dragover');
+      }));
+      node.addEventListener('drop', (event) => this.addDraftImages(side, event.dataTransfer.files));
+      node.addEventListener('paste', (event) => {
+        const files = [];
+        Array.from(event.clipboardData?.items || []).forEach((item) => {
+          if (item.kind === 'file') {
+            const file = item.getAsFile();
+            if (file) files.push(file);
+          }
+        });
+        if (files.length) this.addDraftImages(side, files);
+      });
+    },
+
+    async addDraftImages(side, files) {
+      const list = Array.from(files || []);
+      if (!list.length) return;
+      for (const file of list) {
+        try {
+          const media = await window.DB.createMediaFromFile(file);
+          this.state.cardEditorMedia[side].push(makeDraftItem({ mediaId: media.id, name: media.name, blob: media.blob, existing: false }));
+        } catch (error) {
+          window.UI.toast(error.message || 'Failed to add image.', 'error');
+        }
+      }
+      await window.UI.renderMediaDrafts(side === 'front' ? 'card-front-preview' : 'card-back-preview', this.state.cardEditorMedia[side]);
+      const input = document.getElementById(side === 'front' ? 'card-front-images' : 'card-back-images');
+      if (input) input.value = '';
+    },
+
+    async handleDraftImageRemove(event, side) {
+      const button = event.target.closest('[data-remove-media]');
+      if (!button) return;
+      const localId = button.dataset.removeMedia;
+      const drafts = this.state.cardEditorMedia[side];
+      const index = drafts.findIndex((item) => item.localId === localId);
+      if (index === -1) return;
+      const [removed] = drafts.splice(index, 1);
+      if (removed && !removed.existing) {
+        await window.DB.deleteMediaIfUnused([removed.mediaId]);
+      }
+      await window.UI.renderMediaDrafts(side === 'front' ? 'card-front-preview' : 'card-back-preview', drafts);
+    },
+
+    async populateEditorFromCurrentState() {
+      let card = null;
+      if (this.state.manageState.editingCardId) {
+        card = await window.DB.getCard(this.state.manageState.editingCardId);
+        if (!card) this.state.manageState.editingCardId = null;
+      }
+      if (!card) {
+        await this.releaseUnusedDraftMedia();
+        this.state.cardEditorMedia = { front: [], back: [] };
+      } else if (!this.state.cardEditorMedia.front.length && !this.state.cardEditorMedia.back.length) {
+        this.state.cardEditorMedia.front = await this.buildDraftsFromMediaIds(card.frontImageIds, true);
+        this.state.cardEditorMedia.back = await this.buildDraftsFromMediaIds(card.backImageIds, true);
+      }
+      await window.UI.populateCardEditor(card, this.state.decks, this.state.cardEditorMedia);
+    },
+
+    async buildDraftsFromMediaIds(ids, existing) {
+      const drafts = [];
+      for (const mediaId of ids || []) {
+        const media = await window.DB.getMedia(mediaId);
+        if (!media) continue;
+        drafts.push(makeDraftItem({ mediaId, name: media.name, blob: media.blob, existing }));
+      }
+      return drafts;
+    },
+
+    async releaseUnusedDraftMedia() {
+      const removable = [];
+      ['front', 'back'].forEach((side) => {
+        this.state.cardEditorMedia[side].forEach((item) => {
+          if (!item.existing) removable.push(item.mediaId);
+        });
+      });
+      if (removable.length) await window.DB.deleteMediaIfUnused(removable);
+    },
+
+    async resetCardEditor() {
+      this.state.manageState.editingCardId = null;
+      await this.populateEditorFromCurrentState();
+    },
+
+    collectCardFormData() {
+      const cardId = document.getElementById('card-id').value.trim();
+      const dueLocal = document.getElementById('card-due-at').value;
+      let dueAt = new Date().toISOString();
+      if (dueLocal) {
+        const date = new Date(dueLocal);
+        if (!Number.isNaN(date.getTime())) dueAt = date.toISOString();
+      }
+      return {
+        id: cardId || undefined,
+        deckId: document.getElementById('card-deck').value,
+        question: document.getElementById('card-question').value.trim(),
+        answer: document.getElementById('card-answer').value.trim(),
+        tags: document.getElementById('card-tags').value,
+        state: document.getElementById('card-state').value,
+        dueAt,
+        intervalDays: Number(document.getElementById('card-interval-days').value || 0),
+        easeFactor: Number(document.getElementById('card-ease-factor').value || 2.5),
+        reps: Number(document.getElementById('card-reps').value || 0),
+        lapses: Number(document.getElementById('card-lapses').value || 0),
+        lastReviewIntervalDays: Number(document.getElementById('card-last-review-interval').value || 0),
+        suspended: document.getElementById('card-suspended').checked,
+        frontImageIds: this.state.cardEditorMedia.front.map((item) => item.mediaId),
+        backImageIds: this.state.cardEditorMedia.back.map((item) => item.mediaId),
+      };
+    },
+
+    async handleCardSave(event) {
+      event.preventDefault();
+      try {
+        const raw = this.collectCardFormData();
+        raw.tags = window.Importer.normalizeTags(raw.tags);
+        if (raw.id) {
+          await window.DB.updateCard(raw);
+          window.UI.toast('Card updated.', 'success');
+        } else {
+          await window.DB.createCard({
+            ...window.Scheduler.newCardDefaults(),
+            ...raw,
+            createdAt: window.DB.nowISO(),
+            updatedAt: window.DB.nowISO(),
+          });
+          window.UI.toast('Card added.', 'success');
+        }
+        this.state.manageState.editingCardId = null;
+        this.state.manageState.selectedIds.clear();
+        await this.refreshBaseData();
+        await this.renderManageView();
+      } catch (error) {
+        window.UI.toast(error.message || 'Failed to save card.', 'error');
+      }
+    },
+
+    async renderManageView() {
+      window.UI.fillDeckSelect('card-deck', this.state.decks);
+      const manageState = this.state.manageState;
+      manageState.search = document.getElementById('manage-search').value.trim();
+      manageState.deckFilter = document.getElementById('manage-deck-filter').value;
+      manageState.suspendFilter = document.getElementById('manage-suspend-filter').value;
+      const result = await window.DB.searchCards({
+        query: manageState.search,
+        deckId: manageState.deckFilter && manageState.deckFilter !== 'all' ? manageState.deckFilter : '',
+        suspendFilter: manageState.suspendFilter,
+        page: manageState.page,
+        pageSize: manageState.pageSize,
+      });
+      const deckMap = new Map(this.state.decks.map((deck) => [deck.id, deck.name]));
+      result.items = result.items.map((item) => ({ ...item, deckName: deckMap.get(item.deckId) || item.deckId }));
+      this.state.manageState.currentItems = result.items;
+      window.UI.fillDeckSelect('bulk-move-deck', this.state.decks, { includeNone: true, noneLabel: 'Move selected to…' });
+      window.UI.renderManageTable(result, this.state.manageState);
+      await this.populateEditorFromCurrentState();
+    },
+
+    handleManagePagination(event) {
+      const button = event.target.closest('[data-page]');
+      if (!button || button.disabled) return;
+      this.state.manageState.page = Math.max(1, Number(button.dataset.page || 1));
+      this.renderManageView();
+    },
+
+    async handleManageTableClick(event) {
+      const edit = event.target.closest('[data-edit-card]');
+      if (edit) {
+        await this.releaseUnusedDraftMedia();
+        this.state.cardEditorMedia = { front: [], back: [] };
+        this.state.manageState.editingCardId = edit.dataset.editCard;
+        await this.populateEditorFromCurrentState();
+        return;
+      }
+      const suspend = event.target.closest('[data-toggle-suspend]');
+      if (suspend) {
+        try {
+          await window.DB.toggleSuspend(suspend.dataset.toggleSuspend, suspend.dataset.nextState === 'true');
+          await this.refreshBaseData();
+          await this.renderManageView();
+        } catch (error) {
+          window.UI.toast(error.message || 'Failed to update card.', 'error');
+        }
+        return;
+      }
+      const del = event.target.closest('[data-delete-card]');
+      if (del) {
+        const confirmed = await window.UI.showConfirm({
+          eyebrow: 'Delete card',
+          title: 'Remove this card?',
+          copy: 'The card, its images if no longer used elsewhere, and its review logs will be removed.',
+          confirmLabel: 'Delete card',
+        });
+        if (!confirmed.confirmed) return;
+        try {
+          await window.DB.deleteCard(del.dataset.deleteCard);
+          this.state.manageState.selectedIds.delete(del.dataset.deleteCard);
+          if (this.state.manageState.editingCardId === del.dataset.deleteCard) this.state.manageState.editingCardId = null;
+          await this.refreshBaseData();
+          await this.renderManageView();
+          window.UI.toast('Card deleted.', 'success');
+        } catch (error) {
+          window.UI.toast(error.message || 'Failed to delete card.', 'error');
+        }
+      }
+    },
+
+    handleManageTableChange(event) {
+      const checkbox = event.target.closest('[data-select-card]');
+      if (!checkbox) return;
+      const id = checkbox.dataset.selectCard;
+      if (checkbox.checked) this.state.manageState.selectedIds.add(id);
+      else this.state.manageState.selectedIds.delete(id);
+      this.renderManageView();
+    },
+
+    handleSelectPage(event) {
+      const ids = JSON.parse(event.target.dataset.pageIds || '[]');
+      ids.forEach((id) => {
+        if (event.target.checked) this.state.manageState.selectedIds.add(id);
+        else this.state.manageState.selectedIds.delete(id);
+      });
+      this.renderManageView();
+    },
+
+    async bulkMoveCards() {
+      const deckId = document.getElementById('bulk-move-deck').value;
+      if (!deckId) return window.UI.toast('Choose a destination deck first.', 'error');
+      const ids = [...this.state.manageState.selectedIds];
+      if (!ids.length) return window.UI.toast('Select at least one card.', 'error');
+      try {
+        await window.DB.bulkMoveCards(ids, deckId);
+        this.state.manageState.selectedIds.clear();
+        await this.refreshBaseData();
+        await this.renderManageView();
+        window.UI.toast('Cards moved.', 'success');
+      } catch (error) {
+        window.UI.toast(error.message || 'Bulk move failed.', 'error');
+      }
+    },
+
+    async bulkSuspendCards(suspended) {
+      const ids = [...this.state.manageState.selectedIds];
+      if (!ids.length) return window.UI.toast('Select at least one card.', 'error');
+      try {
+        await window.DB.bulkSuspendCards(ids, suspended);
+        await this.refreshBaseData();
+        await this.renderManageView();
+        window.UI.toast(suspended ? 'Cards suspended.' : 'Cards unsuspended.', 'success');
+      } catch (error) {
+        window.UI.toast(error.message || 'Bulk update failed.', 'error');
+      }
+    },
+
+    async bulkResetScheduling() {
+      const ids = [...this.state.manageState.selectedIds];
+      if (!ids.length) return window.UI.toast('Select at least one card.', 'error');
+      const result = await window.UI.showConfirm({
+        eyebrow: 'Reset scheduling',
+        title: 'Reset selected cards?',
+        copy: 'Selected cards will return to new and become due immediately. Content and images are kept.',
+        confirmLabel: 'Reset cards',
+      });
+      if (!result.confirmed) return;
+      try {
+        await window.DB.bulkResetScheduling(ids);
+        await this.refreshBaseData();
+        await this.renderManageView();
+        window.UI.toast('Scheduling reset.', 'success');
+      } catch (error) {
+        window.UI.toast(error.message || 'Reset failed.', 'error');
+      }
+    },
+
+    async bulkDeleteCards() {
+      const ids = [...this.state.manageState.selectedIds];
+      if (!ids.length) return window.UI.toast('Select at least one card.', 'error');
+      const result = await window.UI.showConfirm({
+        eyebrow: 'Delete cards',
+        title: `Delete ${ids.length} selected card${ids.length === 1 ? '' : 's'}?`,
+        copy: 'Cards, related review logs, and images that become unused will be removed.',
+        confirmLabel: 'Delete selected',
+      });
+      if (!result.confirmed) return;
+      try {
+        await window.DB.bulkDeleteCards(ids);
+        this.state.manageState.selectedIds.clear();
+        this.state.manageState.editingCardId = null;
+        await this.refreshBaseData();
+        await this.renderManageView();
+        window.UI.toast('Selected cards deleted.', 'success');
+      } catch (error) {
+        window.UI.toast(error.message || 'Delete failed.', 'error');
+      }
+    },
+
+    prepareReviewSetup() {
+      this.clearUndo();
+      this.clearReviewAutoRefresh();
+      this.state.reviewSession = getDefaultReviewSession();
+      this.state.reviewSession.deckId = document.getElementById('review-scope-select').value || 'all';
+      this.refreshReviewOverview();
+    },
+
+    async refreshReviewOverview() {
+      const scope = document.getElementById('review-scope-select').value || 'all';
+      const deck = this.state.decks.find((item) => item.id === scope);
+      const deckId = scope === 'all' ? null : scope;
+      const [scopeSnapshot, queueSnapshot] = await Promise.all([
+        window.DB.getReviewScopeSnapshot(deckId),
+        window.DB.getReviewQueueSnapshot(deckId, this.state.settings.newCardsPerDay),
+      ]);
+      const remainingNew = Math.max(0, this.state.settings.newCardsPerDay - queueSnapshot.newStudiedToday);
+      window.UI.renderReviewScope(deck ? deck.name : 'All due cards', scopeSnapshot, remainingNew, queueSnapshot.hiddenNewCount);
+      if (this.state.reviewSession.mode === 'setup') window.UI.renderReviewSetup(deck ? deck.name : 'All due cards');
+    },
+
+    clearUndo() {
+      this.state.reviewSession.lastReviewAction = null;
+      document.getElementById('undo-last-rating-btn').disabled = true;
+    },
+
+    clearReviewAutoRefresh() {
+      if (this.state.reviewRefreshTimer) {
+        clearTimeout(this.state.reviewRefreshTimer);
+        this.state.reviewRefreshTimer = null;
+      }
+    },
+
+    async launchReviewForScope(scope) {
+      window.UI.setActiveView('review');
+      this.state.currentView = 'review';
+      document.getElementById('review-scope-select').value = scope || 'all';
+      this.prepareReviewSetup();
+    },
+
+    async startReview() {
+      const scope = document.getElementById('review-scope-select').value || 'all';
+      const deck = this.state.decks.find((item) => item.id === scope);
+      const queueSnapshot = await window.DB.getReviewQueueSnapshot(scope === 'all' ? null : scope, this.state.settings.newCardsPerDay);
+      this.state.reviewSession = {
+        ...getDefaultReviewSession(),
+        mode: queueSnapshot.cards.length ? 'review' : 'empty',
+        deckId: scope,
+        deckName: deck ? deck.name : 'All due cards',
+        scopeLabel: deck ? deck.name : 'All due cards',
+        queue: queueSnapshot.cards,
+        totalCount: queueSnapshot.cards.length,
+        remainingCount: queueSnapshot.cards.length,
+        hiddenNewCount: queueSnapshot.hiddenNewCount,
+        nextDueAt: queueSnapshot.nextDueAt,
+      };
+      if (!queueSnapshot.cards.length) {
+        await this.refreshReviewEmptyState(true);
+        return;
+      }
+      await this.advanceReviewCard(false);
+    },
+
+    async resolveReviewMedia(ids) {
+      const out = [];
+      for (const mediaId of ids || []) {
+        const media = await window.DB.getMedia(mediaId);
+        if (!media) continue;
+        out.push({ id: media.id, name: media.name, url: window.UI.trackUrl(media.blob) });
+      }
+      return out;
+    },
+
+    async advanceReviewCard(consume) {
+      if (consume) this.state.reviewSession.queue.shift();
+      const card = this.state.reviewSession.queue[0] || null;
+      if (!card) {
+        this.state.reviewSession.mode = 'empty';
+        this.state.reviewSession.card = null;
+        await this.refreshReviewEmptyState(true);
+        return;
+      }
+      window.UI.revokeObjectUrls();
+      this.state.reviewSession.card = card;
+      this.state.reviewSession.answerShown = false;
+      this.state.reviewSession.remainingCount = this.state.reviewSession.queue.length;
+      this.state.reviewSession.frontMedia = await this.resolveReviewMedia(card.frontImageIds);
+      this.state.reviewSession.backMedia = [];
+      this.state.reviewSession.previews = {
+        again: window.Scheduler.getRatingPreviewLabel(card, 'again'),
+        hard: window.Scheduler.getRatingPreviewLabel(card, 'hard'),
+        good: window.Scheduler.getRatingPreviewLabel(card, 'good'),
+        easy: window.Scheduler.getRatingPreviewLabel(card, 'easy'),
+      };
+      await window.UI.renderReviewCard(this.state.reviewSession);
+    },
+
+    async showAnswer() {
+      if (this.state.reviewSession.mode !== 'review' || !this.state.reviewSession.card || this.state.reviewSession.busy) return;
+      this.state.reviewSession.answerShown = true;
+      this.state.reviewSession.shownAt = Date.now();
+      this.state.reviewSession.backMedia = await this.resolveReviewMedia(this.state.reviewSession.card.backImageIds);
+      await window.UI.renderReviewCard(this.state.reviewSession);
+    },
+
+    async rateCurrentCard(rating) {
+      const session = this.state.reviewSession;
+      if (session.busy || session.mode !== 'review' || !session.card || !session.answerShown) return;
+      session.busy = true;
+      try {
+        const before = window.DB.clone(session.card);
+        const applied = window.Scheduler.applyRating(before, rating);
+        const studySeconds = session.shownAt ? Math.max(0, Math.round((Date.now() - session.shownAt) / 1000)) : 0;
+        applied.reviewLog.studySeconds = studySeconds;
+        const saved = await window.DB.applyReview({ cardBefore: before, cardAfter: applied.card, reviewLog: applied.reviewLog });
+        session.lastReviewAction = {
+          cardSnapshot: before,
+          reviewLogId: saved.reviewLog.id,
+          scopeDeckId: session.deckId,
+        };
+        session.reviewedCount += 1;
+        session.busy = false;
+        await this.rebuildReviewQueueAfterAction();
+        window.UI.toast('Saved', 'success');
+      } catch (error) {
+        session.busy = false;
+        window.UI.toast(error.message || 'Failed to save review.', 'error');
+        await window.UI.renderReviewCard(session);
+      }
+    },
+
+    async rebuildReviewQueueAfterAction() {
+      const scope = this.state.reviewSession.deckId === 'all' ? null : this.state.reviewSession.deckId;
+      const snapshot = await window.DB.getReviewQueueSnapshot(scope, this.state.settings.newCardsPerDay);
+      this.state.reviewSession.queue = snapshot.cards;
+      this.state.reviewSession.hiddenNewCount = snapshot.hiddenNewCount;
+      this.state.reviewSession.nextDueAt = snapshot.nextDueAt;
+      this.state.reviewSession.totalCount = Math.max(this.state.reviewSession.reviewedCount + snapshot.cards.length, this.state.reviewSession.totalCount);
+      await this.advanceReviewCard(false);
+    },
+
+    async undoLastRating() {
+      const session = this.state.reviewSession;
+      if (session.busy || !session.lastReviewAction) return;
+      if (session.lastReviewAction.scopeDeckId !== session.deckId) return window.UI.toast('Undo is only available in the same review scope.', 'error');
+      session.busy = true;
+      try {
+        await window.DB.undoReview(session.lastReviewAction);
+        session.lastReviewAction = null;
+        session.reviewedCount = Math.max(0, session.reviewedCount - 1);
+        session.busy = false;
+        await this.rebuildReviewQueueAfterAction();
+        window.UI.toast('Last rating undone.', 'success');
+      } catch (error) {
+        session.busy = false;
+        window.UI.toast(error.message || 'Undo failed.', 'error');
+      }
+    },
+
+    async suspendCurrentReviewCard() {
+      const session = this.state.reviewSession;
+      if (!session.card || session.busy) return;
+      try {
+        await window.DB.toggleSuspend(session.card.id, true);
+        session.lastReviewAction = null;
+        await this.rebuildReviewQueueAfterAction();
+        window.UI.toast('Card suspended.', 'success');
+      } catch (error) {
+        window.UI.toast(error.message || 'Could not suspend card.', 'error');
+      }
+    },
+
+    async editCurrentReviewCard() {
+      const card = this.state.reviewSession.card;
+      if (!card) return;
+      this.endReview(false);
+      this.state.manageState.editingCardId = card.id;
+      this.state.cardEditorMedia = { front: [], back: [] };
+      await this.switchView('manage');
+      await this.populateEditorFromCurrentState();
+    },
+
+    endReview(returnToSetup) {
+      this.clearReviewAutoRefresh();
+      const scope = document.getElementById('review-scope-select').value || 'all';
+      this.state.reviewSession = getDefaultReviewSession();
+      this.state.reviewSession.deckId = scope;
+      this.state.reviewSession.mode = 'setup';
+      if (returnToSetup) window.UI.renderReviewSetup(scope === 'all' ? 'All due cards' : (this.state.decks.find((deck) => deck.id === scope)?.name || 'Selected deck'));
+      this.refreshReviewOverview();
+    },
+
+    async refreshReviewEmptyState(fromStart) {
+      const scope = this.state.reviewSession.deckId === 'all' ? null : this.state.reviewSession.deckId;
+      const snapshot = await window.DB.getReviewQueueSnapshot(scope, this.state.settings.newCardsPerDay);
+      if (snapshot.cards.length) {
+        this.state.reviewSession.mode = 'review';
+        this.state.reviewSession.queue = snapshot.cards;
+        this.state.reviewSession.hiddenNewCount = snapshot.hiddenNewCount;
+        this.state.reviewSession.nextDueAt = snapshot.nextDueAt;
+        if (fromStart) this.state.reviewSession.totalCount = snapshot.cards.length;
+        await this.advanceReviewCard(false);
+        return;
+      }
+      this.state.reviewSession.mode = 'empty';
+      this.state.reviewSession.hiddenNewCount = snapshot.hiddenNewCount;
+      this.state.reviewSession.nextDueAt = snapshot.nextDueAt;
+      window.UI.renderReviewEmpty({
+        nextDueRelative: window.Stats.formatRelativeFuture(snapshot.nextDueAt),
+        nextDueExact: window.Stats.formatDateTime(snapshot.nextDueAt),
+        hiddenNewCount: snapshot.hiddenNewCount,
+        title: 'You’re caught up.',
+        subtitle: 'The next card will appear here automatically when it becomes due.',
+      });
+      this.clearReviewAutoRefresh();
+      this.state.reviewRefreshTimer = window.setTimeout(() => {
+        if (this.state.currentView === 'review' && this.state.reviewSession.mode === 'empty') this.refreshReviewEmptyState(false);
+      }, 30000);
+    },
+
+    async handleImport(event) {
+      event.preventDefault();
+      const fileInput = document.getElementById('import-file');
+      const file = fileInput.files[0];
+      if (!file) return window.UI.toast('Choose a file to import.', 'error');
+      try {
+        const text = await file.text();
+        const parsed = window.Importer.parseImportFile(file.name, text);
+        const newDeckName = document.getElementById('import-new-deck-name').value.trim();
+        let defaultDeckId = document.getElementById('import-deck-select').value || '';
+        if (newDeckName) {
+          const deck = await window.DB.createDeck(newDeckName);
+          defaultDeckId = deck.id;
+        }
+        if (parsed.fileType === 'txt' && !defaultDeckId) throw new Error('Choose a target deck for TXT imports or create a new deck.');
+
+        const rows = parsed.imported.map((row) => ({
+          ...row,
+          deckId: parsed.fileType === 'csv' ? null : defaultDeckId,
+        }));
+
+        const resolvedRows = [];
+        for (const row of rows) {
+          let deckId = row.deckId;
+          if (parsed.fileType === 'csv') {
+            const deckName = row.deckName || defaultDeckId || window.DB.DEFAULT_DECK_NAME;
+            let targetDeck = this.state.decks.find((item) => item.name.toLowerCase() === String(deckName).toLowerCase()) || null;
+            if (!targetDeck) {
+              targetDeck = await window.DB.createDeck(deckName);
+              this.state.decks.push(targetDeck);
+            }
+            deckId = targetDeck.id;
+          }
+          resolvedRows.push({ ...row, deckId });
+        }
+
+        const deduped = await window.Importer.detectImportDuplicates(resolvedRows, defaultDeckId);
+        const cardsToCreate = deduped.accepted.map((row) => ({
+          ...window.Scheduler.newCardDefaults(),
+          id: window.DB.id('card'),
+          deckId: row.deckId,
+          question: row.question,
+          answer: row.answer,
+          tags: row.tags,
+          frontImageIds: [],
+          backImageIds: [],
+          createdAt: window.DB.nowISO(),
+          updatedAt: window.DB.nowISO(),
+        }));
+        if (cardsToCreate.length) await window.DB.bulkCreateCards(cardsToCreate);
+        await this.refreshBaseData();
+        await this.renderManageView();
+        window.UI.renderImportSummary({
+          title: `Imported ${cardsToCreate.length} card${cardsToCreate.length === 1 ? '' : 's'}.`,
+          copy: `Skipped ${parsed.skipped.length} invalid row(s) and ${deduped.duplicates.length} duplicate(s).`,
+          details: [
+            ...(parsed.skipped.length ? parsed.skipped.map((item) => `Row ${item.row}: ${item.reason}`) : []),
+            ...(deduped.duplicates.length ? deduped.duplicates.map((item) => `Duplicate: ${item.question.slice(0, 60)}`) : []),
+          ].join('\n'),
+        });
+        fileInput.value = '';
+        document.getElementById('import-new-deck-name').value = '';
+        window.UI.toast('Import complete.', 'success');
+      } catch (error) {
+        window.UI.renderImportSummary({ title: 'Import failed.', copy: error.message || 'Could not import file.' });
+        window.UI.toast(error.message || 'Import failed.', 'error');
+      }
+    },
+
+    async handleExportBackup() {
+      try {
+        window.UI.renderBackupSummary('Building backup…');
+        const json = await window.Importer.exportBackup();
+        const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+        window.Importer.downloadFile(`offline-flashcards-v5-backup-${stamp}.json`, json, 'application/json');
+        window.UI.renderBackupSummary('Backup downloaded.', 'success');
+        window.UI.toast('Backup downloaded.', 'success');
+      } catch (error) {
+        window.UI.renderBackupSummary(error.message || 'Backup failed.', 'error');
+        window.UI.toast(error.message || 'Backup failed.', 'error');
+      }
+    },
+
+    async handleRestoreBackup() {
+      const file = document.getElementById('import-backup-file').files[0];
+      if (!file) return window.UI.toast('Choose a backup file first.', 'error');
+      const confirmed = await window.UI.showConfirm({
+        eyebrow: 'Restore backup',
+        title: 'Replace all current local data?',
+        copy: 'A safety backup will download first. Restore only proceeds if validation succeeds completely.',
+        confirmLabel: 'Restore now',
+      });
+      if (!confirmed.confirmed) return;
+      try {
+        const safetyBackup = await window.Importer.exportBackup();
+        const safetyStamp = new Date().toISOString().replace(/[:.]/g, '-');
+        window.Importer.downloadFile(`offline-flashcards-v5-safety-backup-${safetyStamp}.json`, safetyBackup, 'application/json');
+        const jsonText = await file.text();
+        const result = await window.Importer.restoreBackup(jsonText);
+        await this.loadSettings();
+        await this.refreshBaseData();
+        this.resetReviewAndEditorState();
+        window.UI.renderBackupSummary(`Restore complete. ${result.cards} cards, ${result.reviewLogs} logs, ${result.media} images restored.`, 'success');
+        window.UI.toast('Restore complete.', 'success');
+      } catch (error) {
+        window.UI.renderBackupSummary(error.message || 'Restore failed.', 'error');
+        window.UI.toast(error.message || 'Restore failed.', 'error');
+      }
+    },
+
+    resetReviewAndEditorState() {
+      this.clearReviewAutoRefresh();
+      this.state.reviewSession = getDefaultReviewSession();
+      this.state.manageState.selectedIds.clear();
+      this.state.manageState.editingCardId = null;
+      this.state.cardEditorMedia = { front: [], back: [] };
+      window.UI.revokeObjectUrls();
+    },
+
+    async renderStatsView() {
+      const [cards, decks, logs] = await Promise.all([window.DB.listCards(), window.DB.listDecks(), window.DB.listReviewLogs()]);
+      const dailyStats = window.Stats.computeDailyStats(logs);
+      window.UI.renderStats({
+        topStrip: window.Stats.buildTopStrip(cards, logs, dailyStats),
+        dailyStats,
+        perDeck: window.Stats.computePerDeckStats(cards, decks, logs),
+      });
+    },
+
+    async saveSettings() {
+      try {
+        const theme = document.getElementById('theme-select').value === 'dark' ? 'dark' : 'light';
+        const newCardsPerDay = Math.max(0, Number(document.getElementById('new-cards-per-day').value || 0));
+        await Promise.all([
+          window.DB.setSetting('theme', theme),
+          window.DB.setSetting('newCardsPerDay', newCardsPerDay),
+        ]);
+        this.state.settings.theme = theme;
+        this.state.settings.newCardsPerDay = newCardsPerDay;
+        window.UI.setTheme(theme);
+        await this.refreshReviewOverview();
+        window.UI.toast('Settings saved.', 'success');
+      } catch (error) {
+        window.UI.toast(error.message || 'Could not save settings.', 'error');
+      }
+    },
+
+    async seedSampleData() {
+      try {
+        const deckA = await window.DB.createDeck('Sample Medicine');
+        const deckB = await window.DB.createDeck('Sample Biology');
+        const rows = [
+          [deckA.id, 'Name the four chambers of the heart.', 'Right atrium, right ventricle, left atrium, left ventricle.'],
+          [deckA.id, 'What carries oxygenated blood from the lungs to the heart?', 'The pulmonary veins.'],
+          [deckA.id, 'Define systole.', 'The contraction phase of the cardiac cycle.'],
+          [deckA.id, 'Which valve sits between the left atrium and left ventricle?', 'The mitral valve.'],
+          [deckB.id, 'What is the powerhouse of the cell?', 'The mitochondrion.'],
+          [deckB.id, 'Which molecule carries genetic instructions?', 'DNA.'],
+          [deckB.id, 'What is osmosis?', 'The net movement of water across a semipermeable membrane.'],
+          [deckB.id, 'What do ribosomes do?', 'They synthesize proteins.'],
+        ];
+        await window.DB.bulkCreateCards(rows.map(([deckId, question, answer]) => ({
+          ...window.Scheduler.newCardDefaults(),
+          id: window.DB.id('card'),
+          deckId,
+          question,
+          answer,
+          tags: [],
+          frontImageIds: [],
+          backImageIds: [],
+          createdAt: window.DB.nowISO(),
+          updatedAt: window.DB.nowISO(),
+        }))); 
+        await this.refreshBaseData();
+        await this.renderManageView();
+        window.UI.toast('Sample data added.', 'success');
+      } catch (error) {
+        window.UI.toast(error.message || 'Sample data could not be added.', 'error');
+      }
+    },
+
+    async cleanupOrphanMedia() {
+      try {
+        const deleted = await window.DB.cleanupOrphanMedia();
+        await this.refreshBaseData();
+        await this.refreshSettingsView();
+        window.UI.toast(`Deleted ${deleted} orphan image${deleted === 1 ? '' : 's'}.`, 'success');
+      } catch (error) {
+        window.UI.toast(error.message || 'Cleanup failed.', 'error');
+      }
+    },
+
+    async clearReviewLogs() {
+      const confirmed = await window.UI.showConfirm({
+        eyebrow: 'Clear review logs',
+        title: 'Delete all study history?',
+        copy: 'Cards, scheduling, and images stay intact. Only the review log history is removed.',
+        confirmLabel: 'Clear logs',
+      });
+      if (!confirmed.confirmed) return;
+      try {
+        await window.DB.clearReviewLogs();
+        await this.refreshBaseData();
+        if (this.state.currentView === 'stats') await this.renderStatsView();
+        window.UI.toast('Review logs cleared.', 'success');
+      } catch (error) {
+        window.UI.toast(error.message || 'Could not clear logs.', 'error');
+      }
+    },
+
+    async wipeData() {
+      const confirmed = await window.UI.showConfirm({
+        eyebrow: 'Delete everything',
+        title: 'Remove all local data?',
+        copy: 'This deletes decks, cards, images, review logs, and settings from this browser.',
+        confirmLabel: 'Delete everything',
+      });
+      if (!confirmed.confirmed) return;
+      try {
+        await window.DB.wipeAll();
+        await window.DB.ensureDefaultDeck();
+        await window.DB.setSetting('theme', 'light');
+        await window.DB.setSetting('newCardsPerDay', 20);
+        this.resetReviewAndEditorState();
+        await this.loadSettings();
+        await this.refreshBaseData();
+        await this.switchView('dashboard');
+        window.UI.toast('All data removed.', 'success');
+      } catch (error) {
+        window.UI.toast(error.message || 'Could not delete data.', 'error');
+      }
+    },
+
+    handleGlobalKeys(event) {
+      const activeTag = document.activeElement?.tagName?.toLowerCase();
+      if (['input', 'textarea', 'select'].includes(activeTag)) return;
+      if (this.state.currentView !== 'review') return;
+      const session = this.state.reviewSession;
+      if (event.code === 'KeyZ' && session.lastReviewAction && !session.busy) {
+        event.preventDefault();
+        this.undoLastRating();
+        return;
+      }
+      if (session.mode !== 'review' || !session.card || session.busy) return;
+      if (!session.answerShown && event.code === 'Space') {
+        event.preventDefault();
+        this.showAnswer();
+        return;
+      }
+      const map = { Digit1: 'again', Digit2: 'hard', Digit3: 'good', Digit4: 'easy' };
+      if (session.answerShown && map[event.code]) {
+        event.preventDefault();
+        this.rateCurrentCard(map[event.code]);
+      }
+    },
+  };
+
+  window.App = App;
+  document.addEventListener('DOMContentLoaded', () => App.init());
+})();
+
+
+===== db.js =====
+(function () {
+  const DB_NAME = 'offline_flashcards_v5';
+  const DB_VERSION = 4;
+  const DEFAULT_DECK_NAME = 'Default';
+  const CARD_STATES = ['new', 'learning', 'review', 'relearning'];
+  const RATINGS = ['again', 'hard', 'good', 'easy'];
+  const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+
+  let dbPromise = null;
+
+  function openDB() {
+    if (dbPromise) return dbPromise;
+    dbPromise = new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onupgradeneeded = (event) => {
+        const db = request.result;
+        const transaction = request.transaction;
+        const oldVersion = event.oldVersion || 0;
+
+        if (oldVersion < 1) {
+          if (!db.objectStoreNames.contains('decks')) db.createObjectStore('decks', { keyPath: 'id' });
+          if (!db.objectStoreNames.contains('cards')) db.createObjectStore('cards', { keyPath: 'id' });
+          if (!db.objectStoreNames.contains('reviewLogs')) db.createObjectStore('reviewLogs', { keyPath: 'id' });
+          if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta', { keyPath: 'key' });
+        }
+        if (oldVersion < 3 && !db.objectStoreNames.contains('media')) {
+          db.createObjectStore('media', { keyPath: 'id' });
+        }
+
+        const decks = transaction.objectStore('decks');
+        ensureIndex(decks, 'name', 'name');
+        ensureIndex(decks, 'updatedAt', 'updatedAt');
+
+        const cards = transaction.objectStore('cards');
+        ensureIndex(cards, 'deckId', 'deckId');
+        ensureIndex(cards, 'state', 'state');
+        ensureIndex(cards, 'dueAt', 'dueAt');
+        ensureIndex(cards, 'updatedAt', 'updatedAt');
+        ensureIndex(cards, 'suspended', 'suspended');
+        ensureIndex(cards, 'state_dueAt', ['state', 'dueAt']);
+        ensureIndex(cards, 'deckId_dueAt', ['deckId', 'dueAt']);
+        ensureIndex(cards, 'deckId_state_dueAt', ['deckId', 'state', 'dueAt']);
+        ensureIndex(cards, 'deckId_updatedAt', ['deckId', 'updatedAt']);
+
+        const logs = transaction.objectStore('reviewLogs');
+        ensureIndex(logs, 'cardId', 'cardId');
+        ensureIndex(logs, 'deckId', 'deckId');
+        ensureIndex(logs, 'timestamp', 'timestamp');
+        ensureIndex(logs, 'deckId_timestamp', ['deckId', 'timestamp']);
+
+        const media = transaction.objectStore('media');
+        ensureIndex(media, 'createdAt', 'createdAt');
+        ensureIndex(media, 'refCount', 'refCount');
+      };
+      request.onblocked = () => reject(new Error('Database upgrade is blocked by another open tab or window. Close other copies of this app and reopen it.'));
+      request.onerror = () => reject(request.error || new Error('Failed to open database.'));
+      request.onsuccess = () => {
+        const db = request.result;
+        db.onversionchange = () => {
+          db.close();
+          dbPromise = null;
+        };
+        resolve(db);
+      };
+    });
+    return dbPromise;
+  }
+
+  function ensureIndex(store, name, keyPath, options) {
+    if (!store.indexNames.contains(name)) store.createIndex(name, keyPath, options || { unique: false });
+  }
+
+  function reqToPromise(request) {
+    return new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('IndexedDB request failed.'));
+    });
+  }
+
+  async function tx(storeNames, mode, executor) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(storeNames, mode);
+      const stores = {};
+      storeNames.forEach((name) => { stores[name] = transaction.objectStore(name); });
+      let result;
+      let settled = false;
+
+      transaction.oncomplete = () => { settled = true; resolve(result); };
+      transaction.onerror = () => { settled = true; reject(transaction.error || new Error('Transaction failed.')); };
+      transaction.onabort = () => { settled = true; reject(transaction.error || new Error('Transaction aborted.')); };
+
+      Promise.resolve()
+        .then(() => executor(stores, transaction))
+        .then((value) => { result = value; })
+        .catch((error) => {
+          if (!settled) {
+            try { transaction.abort(); } catch (abortError) {}
+          }
+          reject(error);
+        });
+    });
+  }
+
+  function iterateCursor(request, onItem) {
+    return new Promise((resolve, reject) => {
+      request.onerror = () => reject(request.error || new Error('Cursor failed.'));
+      request.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (!cursor) {
+          resolve();
+          return;
+        }
+        onItem(cursor.value, cursor);
+      };
+    });
+  }
+
+  function id(prefix) {
+    return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  function nowISO() { return new Date().toISOString(); }
+
+  function clone(value) {
+    if (typeof structuredClone === 'function') return structuredClone(value);
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function isValidISO(value) {
+    return typeof value === 'string' && !Number.isNaN(new Date(value).getTime());
+  }
+
+  function clampNumber(value, fallback, min, max, roundInteger) {
+    let next = Number(value);
+    if (!Number.isFinite(next)) next = fallback;
+    if (typeof min === 'number') next = Math.max(min, next);
+    if (typeof max === 'number') next = Math.min(max, next);
+    if (roundInteger) next = Math.round(next);
+    return next;
+  }
+
+  function normalizeDeckName(value) {
+    return String(value || '').replace(/[\r\n\t]+/g, ' ').trim();
+  }
+
+  function validateDeckName(value) {
+    const name = normalizeDeckName(value);
+    if (!name) throw new Error('Deck name is required.');
+    if (name.length > 120) throw new Error('Deck name must be 120 characters or fewer.');
+    return name;
+  }
+
+  function normalizeTags(value) {
+    const raw = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : [];
+    const seen = new Set();
+    return raw
+      .map((item) => String(item || '').trim())
+      .filter(Boolean)
+      .filter((item) => {
+        const key = item.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }
+
+  function normalizeIdList(value) {
+    const raw = Array.isArray(value) ? value : [];
+    const seen = new Set();
+    return raw
+      .map((item) => String(item || '').trim())
+      .filter(Boolean)
+      .filter((item) => {
+        if (seen.has(item)) return false;
+        seen.add(item);
+        return true;
+      });
+  }
+
+  function buildSearchText(record) {
+    return [record.question, record.answer, ...(record.tags || [])].join(' ').toLowerCase();
+  }
+
+  function normalizeDeckForRead(deck) {
+    if (!deck) return null;
+    const idValue = String(deck.id || '').trim();
+    const nameValue = normalizeDeckName(deck.name || deck.id || '');
+    if (!idValue || !nameValue) return null;
+    const createdAt = isValidISO(deck.createdAt) ? deck.createdAt : isValidISO(deck.updatedAt) ? deck.updatedAt : nowISO();
+    const updatedAt = isValidISO(deck.updatedAt) ? deck.updatedAt : createdAt;
+    return { id: idValue, name: nameValue, createdAt, updatedAt };
+  }
+
+  function prepareDeckForWrite(deck, options) {
+    const preserveTimestamps = !!(options && options.preserveTimestamps);
+    const normalized = normalizeDeckForRead(deck) || {};
+    const now = nowISO();
+    return {
+      id: normalized.id || id('deck'),
+      name: validateDeckName(normalized.name || deck?.name || ''),
+      createdAt: preserveTimestamps && isValidISO(deck?.createdAt) ? deck.createdAt : (normalized.createdAt || now),
+      updatedAt: preserveTimestamps && isValidISO(deck?.updatedAt) ? deck.updatedAt : now,
+    };
+  }
+
+  function normalizeCardForRead(record) {
+    if (!record) return null;
+    const createdAt = isValidISO(record.createdAt) ? record.createdAt : isValidISO(record.updatedAt) ? record.updatedAt : nowISO();
+    const updatedAt = isValidISO(record.updatedAt) ? record.updatedAt : createdAt;
+    const dueAt = isValidISO(record.dueAt) ? record.dueAt : createdAt;
+    const state = CARD_STATES.includes(record.state) ? record.state : 'new';
+    const question = String(record.question || '').trim();
+    const answer = String(record.answer || '').trim();
+    if (!question || !answer) return null;
+    const card = {
+      id: String(record.id || id('card')),
+      deckId: String(record.deckId || ''),
+      question,
+      answer,
+      tags: normalizeTags(record.tags),
+      frontImageIds: normalizeIdList(record.frontImageIds),
+      backImageIds: normalizeIdList(record.backImageIds),
+      createdAt,
+      updatedAt,
+      state,
+      dueAt,
+      intervalDays: clampNumber(record.intervalDays, 0, 0, null, true),
+      easeFactor: Number(clampNumber(record.easeFactor, 2.5, 1.3, 5, false).toFixed(2)),
+      reps: clampNumber(record.reps, 0, 0, null, true),
+      lapses: clampNumber(record.lapses, 0, 0, null, true),
+      lastReviewedAt: isValidISO(record.lastReviewedAt) ? record.lastReviewedAt : null,
+      lastRating: RATINGS.includes(record.lastRating) ? record.lastRating : null,
+      lastReviewIntervalDays: clampNumber(record.lastReviewIntervalDays, 0, 0, null, true),
+      suspended: !!record.suspended,
+    };
+    card.searchText = buildSearchText(card);
+    return card;
+  }
+
+  function prepareCardForWrite(record, options) {
+    const preserveTimestamps = !!(options && options.preserveTimestamps);
+    const normalized = normalizeCardForRead(record) || {};
+    const now = nowISO();
+    const card = {
+      ...normalized,
+      id: normalized.id || String(record?.id || id('card')),
+      deckId: String(normalized.deckId || record?.deckId || '').trim(),
+      question: String(normalized.question || '').trim(),
+      answer: String(normalized.answer || '').trim(),
+      tags: normalizeTags(normalized.tags),
+      frontImageIds: normalizeIdList(normalized.frontImageIds),
+      backImageIds: normalizeIdList(normalized.backImageIds),
+      createdAt: preserveTimestamps && isValidISO(record?.createdAt) ? record.createdAt : (normalized.createdAt || now),
+      updatedAt: preserveTimestamps && isValidISO(record?.updatedAt) ? record.updatedAt : now,
+      state: CARD_STATES.includes(normalized.state) ? normalized.state : 'new',
+      dueAt: isValidISO(normalized.dueAt) ? normalized.dueAt : now,
+      intervalDays: clampNumber(normalized.intervalDays, 0, 0, null, true),
+      easeFactor: Number(clampNumber(normalized.easeFactor, 2.5, 1.3, 5, false).toFixed(2)),
+      reps: clampNumber(normalized.reps, 0, 0, null, true),
+      lapses: clampNumber(normalized.lapses, 0, 0, null, true),
+      lastReviewedAt: isValidISO(normalized.lastReviewedAt) ? normalized.lastReviewedAt : null,
+      lastRating: RATINGS.includes(normalized.lastRating) ? normalized.lastRating : null,
+      lastReviewIntervalDays: clampNumber(normalized.lastReviewIntervalDays, 0, 0, null, true),
+      suspended: !!normalized.suspended,
+    };
+    if (!card.deckId) throw new Error('Card deck is required.');
+    if (!card.question) throw new Error('Front is required.');
+    if (!card.answer) throw new Error('Back is required.');
+    card.searchText = buildSearchText(card);
+    return card;
+  }
+
+  function normalizeReviewLog(log) {
+    if (!log || !log.id || !log.cardId || !log.deckId || !RATINGS.includes(log.rating) || !isValidISO(log.timestamp)) return null;
+    return {
+      id: String(log.id),
+      cardId: String(log.cardId),
+      deckId: String(log.deckId),
+      timestamp: log.timestamp,
+      rating: log.rating,
+      previousState: CARD_STATES.includes(log.previousState) ? log.previousState : 'new',
+      newState: CARD_STATES.includes(log.newState) ? log.newState : 'new',
+      previousIntervalDays: clampNumber(log.previousIntervalDays, 0, 0, null, true),
+      newIntervalDays: clampNumber(log.newIntervalDays, 0, 0, null, true),
+      previousEaseFactor: Number(clampNumber(log.previousEaseFactor, 2.5, 1.3, 5, false).toFixed(2)),
+      newEaseFactor: Number(clampNumber(log.newEaseFactor, 2.5, 1.3, 5, false).toFixed(2)),
+      studySeconds: clampNumber(log.studySeconds, 0, 0, null, true),
+    };
+  }
+
+  function normalizeMediaForRead(record) {
+    if (!record || !record.id || !record.blob) return null;
+    const type = String(record.type || record.mime || record.blob.type || '').trim();
+    if (!type.startsWith('image/')) return null;
+    return {
+      id: String(record.id),
+      name: String(record.name || 'image').trim() || 'image',
+      type,
+      size: clampNumber(record.size || record.blob.size, record.blob.size || 0, 0, null, true),
+      blob: record.blob,
+      createdAt: isValidISO(record.createdAt) ? record.createdAt : nowISO(),
+      refCount: clampNumber(record.refCount, 0, 0, null, true),
+    };
+  }
+
+  function prepareMediaForWrite(record, options) {
+    const preserveTimestamps = !!(options && options.preserveTimestamps);
+    const normalized = normalizeMediaForRead(record) || {};
+    const blob = record?.blob || normalized.blob;
+    if (!(blob instanceof Blob)) throw new Error('Invalid image payload.');
+    const type = String(record?.type || normalized.type || blob.type || '').trim();
+    if (!type.startsWith('image/')) throw new Error('Only image files are supported.');
+    const size = clampNumber(record?.size || blob.size, blob.size || 0, 0, null, true);
+    if (size > MAX_IMAGE_BYTES) throw new Error(`Image is too large. Limit is ${Math.round(MAX_IMAGE_BYTES / (1024 * 1024))} MB per image.`);
+    const now = nowISO();
+    return {
+      id: String(record?.id || normalized.id || id('media')),
+      name: String(record?.name || normalized.name || 'image').trim() || 'image',
+      type,
+      size,
+      blob,
+      createdAt: preserveTimestamps && isValidISO(record?.createdAt) ? record.createdAt : (normalized.createdAt || now),
+      refCount: clampNumber(record?.refCount ?? normalized.refCount, 0, 0, null, true),
+    };
+  }
+
+  function normalizeMetaRecord(record) {
+    if (!record || typeof record.key !== 'string') return null;
+    return { key: record.key, value: clone(record.value) };
+  }
+
+  function uniqueIdList(ids) {
+    return normalizeIdList(ids);
+  }
+
+  function buildRefCountsFromCards(cards) {
+    const counts = new Map();
+    (cards || []).forEach((card) => {
+      uniqueIdList([...(card.frontImageIds || []), ...(card.backImageIds || [])]).forEach((mediaId) => {
+        counts.set(mediaId, (counts.get(mediaId) || 0) + 1);
+      });
+    });
+    return counts;
+  }
+
+  async function ensureDefaultDeck() {
+    return tx(['decks'], 'readwrite', async ({ decks }) => {
+      const all = (await reqToPromise(decks.getAll())).map(normalizeDeckForRead).filter(Boolean);
+      const existing = all.find((deck) => deck.name.toLowerCase() === DEFAULT_DECK_NAME.toLowerCase());
+      if (existing) return existing;
+      const defaultDeck = prepareDeckForWrite({ id: 'default', name: DEFAULT_DECK_NAME });
+      decks.put(defaultDeck);
+      return defaultDeck;
+    });
+  }
+
+  async function listDecks() {
+    const decks = await tx(['decks'], 'readonly', async ({ decks }) => reqToPromise(decks.getAll()));
+    const normalized = (decks || []).map(normalizeDeckForRead).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name));
+    if (!normalized.find((deck) => deck.name === DEFAULT_DECK_NAME)) await ensureDefaultDeck();
+    return (await tx(['decks'], 'readonly', async ({ decks }) => reqToPromise(decks.getAll()))).map(normalizeDeckForRead).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async function getDeck(deckId) {
+    if (!deckId) return null;
+    const deck = await tx(['decks'], 'readonly', async ({ decks }) => reqToPromise(decks.get(deckId)));
+    return normalizeDeckForRead(deck);
+  }
+
+  async function findDeckByNameCI(name, stores) {
+    const target = normalizeDeckName(name).toLowerCase();
+    const all = stores ? await reqToPromise(stores.decks.getAll()) : await tx(['decks'], 'readonly', async ({ decks }) => reqToPromise(decks.getAll()));
+    return (all || []).map(normalizeDeckForRead).filter(Boolean).find((deck) => deck.name.toLowerCase() === target) || null;
+  }
+
+  async function createDeck(name) {
+    const cleanName = validateDeckName(name);
+    return tx(['decks'], 'readwrite', async ({ decks }) => {
+      const duplicate = await findDeckByNameCI(cleanName, { decks });
+      if (duplicate) throw new Error('A deck with this name already exists.');
+      const deck = prepareDeckForWrite({ name: cleanName });
+      decks.put(deck);
+      return deck;
+    });
+  }
+
+  async function renameDeck(deckId, newName) {
+    const cleanName = validateDeckName(newName);
+    return tx(['decks', 'cards', 'reviewLogs'], 'readwrite', async ({ decks, cards, reviewLogs }) => {
+      const existing = normalizeDeckForRead(await reqToPromise(decks.get(deckId)));
+      if (!existing) throw new Error('Deck not found.');
+      const duplicate = await findDeckByNameCI(cleanName, { decks });
+      if (duplicate && duplicate.id !== existing.id) throw new Error('Another deck already uses this name.');
+      const updated = prepareDeckForWrite({ ...existing, name: cleanName, createdAt: existing.createdAt });
+      decks.put(updated);
+
+      await iterateCursor(cards.index('deckId').openCursor(IDBKeyRange.only(deckId)), (value, cursor) => {
+        const card = normalizeCardForRead(value);
+        if (!card) {
+          cursor.delete();
+          cursor.continue();
+          return;
+        }
+        card.deckId = updated.id;
+        card.updatedAt = nowISO();
+        card.searchText = buildSearchText(card);
+        cursor.update(card);
+        cursor.continue();
+      });
+      await iterateCursor(reviewLogs.index('deckId').openCursor(IDBKeyRange.only(deckId)), (value, cursor) => {
+        const log = normalizeReviewLog(value);
+        if (!log) {
+          cursor.delete();
+          cursor.continue();
+          return;
+        }
+        log.deckId = updated.id;
+        cursor.update(log);
+        cursor.continue();
+      });
+      return updated;
+    });
+  }
+
+  async function deleteDeck(deckId, mode) {
+    if (!deckId) throw new Error('Deck id is required.');
+    const deleteMode = mode === 'delete-cards' ? 'delete-cards' : 'move-to-default';
+    return tx(['decks', 'cards', 'reviewLogs', 'media'], 'readwrite', async ({ decks, cards, reviewLogs, media }) => {
+      const target = normalizeDeckForRead(await reqToPromise(decks.get(deckId)));
+      if (!target) throw new Error('Deck not found.');
+      if (deleteMode === 'move-to-default' && target.name === DEFAULT_DECK_NAME) {
+        throw new Error('The Default deck cannot be deleted by moving cards into itself.');
+      }
+
+      let defaultDeck = null;
+      if (deleteMode === 'move-to-default') {
+        defaultDeck = await findDeckByNameCI(DEFAULT_DECK_NAME, { decks });
+        if (!defaultDeck) {
+          defaultDeck = prepareDeckForWrite({ id: 'default', name: DEFAULT_DECK_NAME });
+          decks.put(defaultDeck);
+        }
+      }
+
+      const cardsToDelete = [];
+      const cardIdsToDelete = new Set();
+      await iterateCursor(cards.index('deckId').openCursor(IDBKeyRange.only(deckId)), (value, cursor) => {
+        const card = normalizeCardForRead(value);
+        if (!card) {
+          cursor.delete();
+          cursor.continue();
+          return;
+        }
+        if (deleteMode === 'delete-cards') {
+          cardsToDelete.push(card);
+          cardIdsToDelete.add(card.id);
+          cursor.delete();
+        } else {
+          const moved = prepareCardForWrite({ ...card, deckId: defaultDeck.id, createdAt: card.createdAt });
+          cursor.update(moved);
+        }
+        cursor.continue();
+      });
+
+      if (deleteMode === 'delete-cards') {
+        const diff = new Map();
+        cardsToDelete.forEach((card) => {
+          uniqueIdList([...(card.frontImageIds || []), ...(card.backImageIds || [])]).forEach((mediaId) => {
+            diff.set(mediaId, (diff.get(mediaId) || 0) - 1);
+          });
+        });
+        await applyMediaRefDiff(media, diff);
+      }
+
+      await iterateCursor(reviewLogs.index('deckId').openCursor(IDBKeyRange.only(deckId)), (value, cursor) => {
+        const log = normalizeReviewLog(value);
+        if (!log) {
+          cursor.delete();
+          cursor.continue();
+          return;
+        }
+        if (deleteMode === 'delete-cards' || cardIdsToDelete.has(log.cardId)) {
+          cursor.delete();
+        } else {
+          log.deckId = defaultDeck.id;
+          cursor.update(log);
+        }
+        cursor.continue();
+      });
+
+      decks.delete(deckId);
+      return { deletedDeckId: deckId, mode: deleteMode, affectedCount: deleteMode === 'delete-cards' ? cardsToDelete.length : 'moved' };
+    });
+  }
+
+  async function listCards() {
+    const cards = await tx(['cards'], 'readonly', async ({ cards }) => reqToPromise(cards.getAll()));
+    return (cards || []).map(normalizeCardForRead).filter(Boolean);
+  }
+
+  async function getCard(cardId) {
+    if (!cardId) return null;
+    const card = await tx(['cards'], 'readonly', async ({ cards }) => reqToPromise(cards.get(cardId)));
+    return normalizeCardForRead(card);
+  }
+
+  async function getCardsByIds(ids) {
+    const list = uniqueIdList(ids);
+    if (!list.length) return [];
+    return tx(['cards'], 'readonly', async ({ cards }) => {
+      const out = [];
+      for (const cardId of list) {
+        const card = normalizeCardForRead(await reqToPromise(cards.get(cardId)));
+        if (card) out.push(card);
+      }
+      return out;
+    });
+  }
+
+  async function getCardsByDeck(deckId) {
+    if (!deckId) return [];
+    return tx(['cards'], 'readonly', async ({ cards }) => {
+      const out = [];
+      await iterateCursor(cards.index('deckId').openCursor(IDBKeyRange.only(deckId)), (value, cursor) => {
+        const card = normalizeCardForRead(value);
+        if (card) out.push(card);
+        cursor.continue();
+      });
+      return out;
+    });
+  }
+
+  async function validateImageRefsExist(mediaStore, ids) {
+    const unique = uniqueIdList(ids);
+    for (const mediaId of unique) {
+      const media = normalizeMediaForRead(await reqToPromise(mediaStore.get(mediaId)));
+      if (!media) throw new Error('A selected image could not be found. Please try again.');
+    }
+  }
+
+  async function applyMediaRefDiff(mediaStore, diffMap) {
+    let deleted = 0;
+    for (const [mediaId, delta] of diffMap.entries()) {
+      if (!delta) continue;
+      const current = normalizeMediaForRead(await reqToPromise(mediaStore.get(mediaId)));
+      if (!current) {
+        if (delta > 0) throw new Error('A referenced image could not be found.');
+        continue;
+      }
+      const nextCount = Math.max(0, (current.refCount || 0) + delta);
+      if (nextCount === 0) {
+        mediaStore.delete(mediaId);
+        deleted += 1;
+      } else {
+        mediaStore.put({ ...current, refCount: nextCount });
+      }
+    }
+    return deleted;
+  }
+
+  function diffImageRefs(oldIds, newIds) {
+    const diff = new Map();
+    const oldMap = new Map();
+    const newMap = new Map();
+    uniqueIdList(oldIds).forEach((id) => oldMap.set(id, (oldMap.get(id) || 0) + 1));
+    uniqueIdList(newIds).forEach((id) => newMap.set(id, (newMap.get(id) || 0) + 1));
+    new Set([...oldMap.keys(), ...newMap.keys()]).forEach((id) => {
+      const delta = (newMap.get(id) || 0) - (oldMap.get(id) || 0);
+      if (delta) diff.set(id, delta);
+    });
+    return diff;
+  }
+
+
+
+  async function bulkCreateCards(cardInputs) {
+    const cards = (cardInputs || []).map((item) => prepareCardForWrite(item));
+    return tx(['decks', 'cards', 'media'], 'readwrite', async ({ decks, cards: cardsStore, media }) => {
+      const deckCache = new Map();
+      for (const card of cards) {
+        if (!deckCache.has(card.deckId)) {
+          deckCache.set(card.deckId, normalizeDeckForRead(await reqToPromise(decks.get(card.deckId))));
+        }
+        if (!deckCache.get(card.deckId)) throw new Error(`Selected deck does not exist: ${card.deckId}`);
+        await validateImageRefsExist(media, [...card.frontImageIds, ...card.backImageIds]);
+      }
+      const diff = new Map();
+      cards.forEach((card) => {
+        cardsStore.put(card);
+        uniqueIdList([...(card.frontImageIds || []), ...(card.backImageIds || [])]).forEach((mediaId) => {
+          diff.set(mediaId, (diff.get(mediaId) || 0) + 1);
+        });
+      });
+      await applyMediaRefDiff(media, diff);
+      return cards.length;
+    });
+  }
+
+  async function createCard(cardInput) {
+    const clean = prepareCardForWrite(cardInput || {});
+    return tx(['decks', 'cards', 'media'], 'readwrite', async ({ decks, cards, media }) => {
+      const deck = normalizeDeckForRead(await reqToPromise(decks.get(clean.deckId)));
+      if (!deck) throw new Error('Selected deck does not exist.');
+      await validateImageRefsExist(media, [...clean.frontImageIds, ...clean.backImageIds]);
+      cards.put(clean);
+      const diff = diffImageRefs([], [...clean.frontImageIds, ...clean.backImageIds]);
+      await applyMediaRefDiff(media, diff);
+      return clean;
+    });
+  }
+
+  async function updateCard(cardInput) {
+    if (!cardInput || !cardInput.id) throw new Error('Card id is required for update.');
+    return tx(['decks', 'cards', 'reviewLogs', 'media'], 'readwrite', async ({ decks, cards, reviewLogs, media }) => {
+      const existing = normalizeCardForRead(await reqToPromise(cards.get(cardInput.id)));
+      if (!existing) throw new Error('Card not found.');
+      const merged = prepareCardForWrite({ ...existing, ...cardInput, createdAt: existing.createdAt });
+      const deck = normalizeDeckForRead(await reqToPromise(decks.get(merged.deckId)));
+      if (!deck) throw new Error('Selected deck does not exist.');
+      await validateImageRefsExist(media, [...merged.frontImageIds, ...merged.backImageIds]);
+      cards.put(merged);
+      const diff = diffImageRefs([...existing.frontImageIds, ...existing.backImageIds], [...merged.frontImageIds, ...merged.backImageIds]);
+      await applyMediaRefDiff(media, diff);
+      if (existing.deckId !== merged.deckId) {
+        await iterateCursor(reviewLogs.index('cardId').openCursor(IDBKeyRange.only(existing.id)), (value, cursor) => {
+          const log = normalizeReviewLog(value);
+          if (!log) {
+            cursor.delete();
+            cursor.continue();
+            return;
+          }
+          log.deckId = merged.deckId;
+          cursor.update(log);
+          cursor.continue();
+        });
+      }
+      return merged;
+    });
+  }
+
+  async function deleteCard(cardId) {
+    if (!cardId) throw new Error('Card id is required.');
+    return tx(['cards', 'reviewLogs', 'media'], 'readwrite', async ({ cards, reviewLogs, media }) => {
+      const existing = normalizeCardForRead(await reqToPromise(cards.get(cardId)));
+      if (!existing) return true;
+      cards.delete(cardId);
+      await iterateCursor(reviewLogs.index('cardId').openCursor(IDBKeyRange.only(cardId)), (value, cursor) => {
+        cursor.delete();
+        cursor.continue();
+      });
+      const diff = diffImageRefs([...existing.frontImageIds, ...existing.backImageIds], []);
+      await applyMediaRefDiff(media, diff);
+      return true;
+    });
+  }
+
+  async function toggleSuspend(cardId, suspended) {
+    return tx(['cards'], 'readwrite', async ({ cards }) => {
+      const existing = normalizeCardForRead(await reqToPromise(cards.get(cardId)));
+      if (!existing) throw new Error('Card not found.');
+      const updated = prepareCardForWrite({ ...existing, suspended: !!suspended, createdAt: existing.createdAt });
+      cards.put(updated);
+      return updated;
+    });
+  }
+
+  async function bulkMoveCards(cardIds, deckId) {
+    const targetIds = uniqueIdList(cardIds);
+    if (!targetIds.length) return 0;
+    return tx(['decks', 'cards', 'reviewLogs'], 'readwrite', async ({ decks, cards, reviewLogs }) => {
+      const deck = normalizeDeckForRead(await reqToPromise(decks.get(deckId)));
+      if (!deck) throw new Error('Selected deck does not exist.');
+      let count = 0;
+      for (const cardId of targetIds) {
+        const existing = normalizeCardForRead(await reqToPromise(cards.get(cardId)));
+        if (!existing) continue;
+        const updated = prepareCardForWrite({ ...existing, deckId: deck.id, createdAt: existing.createdAt });
+        cards.put(updated);
+        if (existing.deckId !== updated.deckId) {
+          await iterateCursor(reviewLogs.index('cardId').openCursor(IDBKeyRange.only(cardId)), (value, cursor) => {
+            const log = normalizeReviewLog(value);
+            if (!log) {
+              cursor.delete();
+              cursor.continue();
+              return;
+            }
+            log.deckId = updated.deckId;
+            cursor.update(log);
+            cursor.continue();
+          });
+        }
+        count += 1;
+      }
+      return count;
+    });
+  }
+
+  async function bulkSuspendCards(cardIds, suspended) {
+    const targetIds = uniqueIdList(cardIds);
+    if (!targetIds.length) return 0;
+    return tx(['cards'], 'readwrite', async ({ cards }) => {
+      let count = 0;
+      for (const cardId of targetIds) {
+        const existing = normalizeCardForRead(await reqToPromise(cards.get(cardId)));
+        if (!existing) continue;
+        cards.put(prepareCardForWrite({ ...existing, suspended: !!suspended, createdAt: existing.createdAt }));
+        count += 1;
+      }
+      return count;
+    });
+  }
+
+  async function bulkResetScheduling(cardIds) {
+    const targetIds = uniqueIdList(cardIds);
+    if (!targetIds.length) return 0;
+    return tx(['cards'], 'readwrite', async ({ cards }) => {
+      let count = 0;
+      for (const cardId of targetIds) {
+        const existing = normalizeCardForRead(await reqToPromise(cards.get(cardId)));
+        if (!existing) continue;
+        cards.put(prepareCardForWrite({
+          ...existing,
+          state: 'new',
+          dueAt: nowISO(),
+          intervalDays: 0,
+          easeFactor: 2.5,
+          reps: 0,
+          lapses: 0,
+          lastReviewedAt: null,
+          lastRating: null,
+          lastReviewIntervalDays: 0,
+          suspended: false,
+          createdAt: existing.createdAt,
+        }));
+        count += 1;
+      }
+      return count;
+    });
+  }
+
+  async function bulkDeleteCards(cardIds) {
+    const targetIds = uniqueIdList(cardIds);
+    if (!targetIds.length) return 0;
+    return tx(['cards', 'reviewLogs', 'media'], 'readwrite', async ({ cards, reviewLogs, media }) => {
+      let count = 0;
+      const diff = new Map();
+      for (const cardId of targetIds) {
+        const existing = normalizeCardForRead(await reqToPromise(cards.get(cardId)));
+        if (!existing) continue;
+        cards.delete(cardId);
+        await iterateCursor(reviewLogs.index('cardId').openCursor(IDBKeyRange.only(cardId)), (value, cursor) => {
+          cursor.delete();
+          cursor.continue();
+        });
+        uniqueIdList([...(existing.frontImageIds || []), ...(existing.backImageIds || [])]).forEach((mediaId) => {
+          diff.set(mediaId, (diff.get(mediaId) || 0) - 1);
+        });
+        count += 1;
+      }
+      await applyMediaRefDiff(media, diff);
+      return count;
+    });
+  }
+
+  async function countCards() {
+    return tx(['cards'], 'readonly', async ({ cards }) => reqToPromise(cards.count()));
+  }
+
+  async function countReviewLogs() {
+    return tx(['reviewLogs'], 'readonly', async ({ reviewLogs }) => reqToPromise(reviewLogs.count()));
+  }
+
+  async function countMedia() {
+    return tx(['media'], 'readonly', async ({ media }) => reqToPromise(media.count()));
+  }
+
+  async function countMeta() {
+    return tx(['meta'], 'readonly', async ({ meta }) => reqToPromise(meta.count()));
+  }
+
+  async function getStorageSummary() {
+    const [deckCount, cardCount, reviewLogCount, metaCount, mediaCount] = await Promise.all([
+      tx(['decks'], 'readonly', async ({ decks }) => reqToPromise(decks.count())),
+      countCards(),
+      countReviewLogs(),
+      countMeta(),
+      countMedia(),
+    ]);
+    return { deckCount, cardCount, reviewLogCount, metaCount, mediaCount };
+  }
+
+  async function countDueBefore(iso, deckId) {
+    return tx(['cards'], 'readonly', async ({ cards }) => {
+      const index = deckId ? cards.index('deckId_dueAt') : cards.index('dueAt');
+      const range = deckId ? IDBKeyRange.bound([deckId, ''], [deckId, iso], false, false) : IDBKeyRange.upperBound(iso, false);
+      let count = 0;
+      await iterateCursor(index.openCursor(range), (value, cursor) => {
+        const card = normalizeCardForRead(value);
+        if (card && !card.suspended && card.dueAt <= iso) count += 1;
+        cursor.continue();
+      });
+      return count;
+    });
+  }
+
+  async function countByState(state, deckId) {
+    return tx(['cards'], 'readonly', async ({ cards }) => {
+      const index = deckId ? cards.index('deckId_state_dueAt') : cards.index('state');
+      let count = 0;
+      const range = deckId ? IDBKeyRange.bound([deckId, state, ''], [deckId, state, '\uffff']) : IDBKeyRange.only(state);
+      await iterateCursor(index.openCursor(range), (value, cursor) => {
+        const card = normalizeCardForRead(value);
+        if (card) count += 1;
+        cursor.continue();
+      });
+      return count;
+    });
+  }
+
+  async function getReviewScopeSnapshot(deckId) {
+    const endToday = new Date();
+    endToday.setHours(23, 59, 59, 999);
+    const [dueNow, dueToday, newCount] = await Promise.all([
+      countDueBefore(nowISO(), deckId),
+      countDueBefore(endToday.toISOString(), deckId),
+      countByState('new', deckId),
+    ]);
+    return { dueNow, dueToday, newCount };
+  }
+
+  async function fetchDueByState(state, deckId) {
+    return tx(['cards'], 'readonly', async ({ cards }) => {
+      const now = nowISO();
+      const index = deckId ? cards.index('deckId_state_dueAt') : cards.index('state_dueAt');
+      const range = deckId
+        ? IDBKeyRange.bound([deckId, state, ''], [deckId, state, now], false, false)
+        : IDBKeyRange.bound([state, ''], [state, now], false, false);
+      const out = [];
+      await iterateCursor(index.openCursor(range), (value, cursor) => {
+        const card = normalizeCardForRead(value);
+        if (card && !card.suspended && card.state === state && card.dueAt <= now) out.push(card);
+        cursor.continue();
+      });
+      return out.sort((a, b) => a.dueAt.localeCompare(b.dueAt));
+    });
+  }
+
+  async function getTodayNewStudiedCount(deckId) {
+    return tx(['reviewLogs'], 'readonly', async ({ reviewLogs }) => {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      const end = new Date();
+      end.setHours(23, 59, 59, 999);
+      const range = deckId ? IDBKeyRange.bound([deckId, start.toISOString()], [deckId, end.toISOString()]) : IDBKeyRange.bound(start.toISOString(), end.toISOString());
+      const index = deckId ? reviewLogs.index('deckId_timestamp') : reviewLogs.index('timestamp');
+      const seen = new Set();
+      await iterateCursor(index.openCursor(range), (value, cursor) => {
+        const log = normalizeReviewLog(value);
+        if (log && log.previousState === 'new') seen.add(log.cardId);
+        cursor.continue();
+      });
+      return seen.size;
+    });
+  }
+
+  async function getReviewQueueSnapshot(deckId, newCardsPerDay) {
+    const [learning, relearning, review, news, newStudiedToday, nextDueCard] = await Promise.all([
+      fetchDueByState('learning', deckId),
+      fetchDueByState('relearning', deckId),
+      fetchDueByState('review', deckId),
+      fetchDueByState('new', deckId),
+      getTodayNewStudiedCount(deckId),
+      findNextDue(deckId),
+    ]);
+    const remainingNew = Math.max(0, Number(newCardsPerDay || 0) - newStudiedToday);
+    const allowedNew = news.slice(0, remainingNew);
+    const hiddenNewCount = Math.max(0, news.length - allowedNew.length);
+    return {
+      cards: [...learning, ...relearning, ...allowedNew, ...review],
+      counts: { learning: learning.length, relearning: relearning.length, new: allowedNew.length, review: review.length },
+      hiddenNewCount,
+      newStudiedToday,
+      nextDueAt: nextDueCard ? nextDueCard.dueAt : null,
+    };
+  }
+
+  async function findNextDue(deckId) {
+    return tx(['cards'], 'readonly', async ({ cards }) => {
+      const now = nowISO();
+      const index = deckId ? cards.index('deckId_dueAt') : cards.index('dueAt');
+      const range = deckId ? IDBKeyRange.lowerBound([deckId, now], true) : IDBKeyRange.lowerBound(now, true);
+      return new Promise((resolve, reject) => {
+        const request = index.openCursor(range);
+        request.onerror = () => reject(request.error || new Error('Failed looking up next due card.'));
+        request.onsuccess = (event) => {
+          const cursor = event.target.result;
+          if (!cursor) {
+            resolve(null);
+            return;
+          }
+          const card = normalizeCardForRead(cursor.value);
+          if (card && !card.suspended) {
+            resolve(card);
+            return;
+          }
+          cursor.continue();
+        };
+      });
+    });
+  }
+
+  async function getDashboardSnapshot() {
+    const [decks, cards, logs] = await Promise.all([listDecks(), listCards(), listReviewLogs()]);
+    return window.Stats.computeDashboard(cards, decks, logs);
+  }
+
+  async function searchCards(options) {
+    const query = String(options?.query || '').trim().toLowerCase();
+    const deckId = options?.deckId || '';
+    const suspendFilter = options?.suspendFilter || 'all';
+    const page = Math.max(1, Number(options?.page || 1));
+    const pageSize = Math.max(1, Math.min(200, Number(options?.pageSize || 20)));
+
+    return tx(['cards'], 'readonly', async ({ cards }) => {
+      let source;
+      let range = null;
+      let direction = 'prev';
+
+      if (deckId && !query) {
+        source = cards.index('deckId_updatedAt');
+        range = IDBKeyRange.bound([deckId, ''], [deckId, '\uffff']);
+      } else {
+        source = cards.index('updatedAt');
+      }
+
+      const matched = [];
+      await new Promise((resolve, reject) => {
+        const request = source.openCursor(range, direction);
+        request.onerror = () => reject(request.error || new Error('Search failed.'));
+        request.onsuccess = (event) => {
+          const cursor = event.target.result;
+          if (!cursor) {
+            resolve();
+            return;
+          }
+          const card = normalizeCardForRead(cursor.value);
+          let include = !!card;
+          if (include && deckId && card.deckId !== deckId) include = false;
+          if (include && suspendFilter === 'active' && card.suspended) include = false;
+          if (include && suspendFilter === 'suspended' && !card.suspended) include = false;
+          if (include && query && !card.searchText.includes(query)) include = false;
+          if (include) matched.push(card);
+          cursor.continue();
+        };
+      });
+
+      const total = matched.length;
+      const start = (page - 1) * pageSize;
+      return { total, items: matched.slice(start, start + pageSize) };
+    });
+  }
+
+  async function createMediaFromFile(file) {
+    if (!(file instanceof Blob)) throw new Error('No file selected.');
+    const name = file.name || 'image';
+    return tx(['media'], 'readwrite', async ({ media }) => {
+      const record = prepareMediaForWrite({ name, type: file.type, size: file.size, blob: file, refCount: 0 });
+      media.put(record);
+      return record;
+    });
+  }
+
+  async function getMedia(mediaId) {
+    if (!mediaId) return null;
+    const record = await tx(['media'], 'readonly', async ({ media }) => reqToPromise(media.get(mediaId)));
+    return normalizeMediaForRead(record);
+  }
+
+  async function listMedia() {
+    const records = await tx(['media'], 'readonly', async ({ media }) => reqToPromise(media.getAll()));
+    return (records || []).map(normalizeMediaForRead).filter(Boolean);
+  }
+
+  async function deleteMedia(mediaId) {
+    if (!mediaId) return false;
+    return tx(['media'], 'readwrite', async ({ media }) => {
+      media.delete(mediaId);
+      return true;
+    });
+  }
+
+  async function deleteMediaIfUnused(mediaIds) {
+    const ids = uniqueIdList(mediaIds);
+    if (!ids.length) return 0;
+    return tx(['media'], 'readwrite', async ({ media }) => {
+      let deleted = 0;
+      for (const mediaId of ids) {
+        const record = normalizeMediaForRead(await reqToPromise(media.get(mediaId)));
+        if (record && clampNumber(record.refCount, 0, 0, null, true) === 0) {
+          media.delete(mediaId);
+          deleted += 1;
+        }
+      }
+      return deleted;
+    });
+  }
+
+  async function findOrphanMediaIds() {
+    return tx(['media'], 'readonly', async ({ media }) => {
+      const out = [];
+      await iterateCursor(media.index('refCount').openCursor(IDBKeyRange.only(0)), (value, cursor) => {
+        const record = normalizeMediaForRead(value);
+        if (record) out.push(record.id);
+        cursor.continue();
+      });
+      return out;
+    });
+  }
+
+  async function cleanupOrphanMedia() {
+    return tx(['media'], 'readwrite', async ({ media }) => {
+      let deleted = 0;
+      await iterateCursor(media.index('refCount').openCursor(IDBKeyRange.only(0)), (value, cursor) => {
+        cursor.delete();
+        deleted += 1;
+        cursor.continue();
+      });
+      return deleted;
+    });
+  }
+
+  async function listReviewLogs() {
+    const logs = await tx(['reviewLogs'], 'readonly', async ({ reviewLogs }) => reqToPromise(reviewLogs.getAll()));
+    return (logs || []).map(normalizeReviewLog).filter(Boolean).sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  }
+
+  async function applyReview(payload) {
+    if (!payload || !payload.cardBefore || !payload.cardAfter || !payload.reviewLog) throw new Error('Invalid review payload.');
+    const reviewLog = normalizeReviewLog(payload.reviewLog);
+    if (!reviewLog) throw new Error('Invalid review log.');
+    return tx(['cards', 'reviewLogs'], 'readwrite', async ({ cards, reviewLogs }) => {
+      const existing = normalizeCardForRead(await reqToPromise(cards.get(payload.cardBefore.id)));
+      if (!existing) throw new Error('Card not found.');
+      const updated = prepareCardForWrite({ ...payload.cardAfter, id: existing.id, createdAt: existing.createdAt });
+      cards.put(updated);
+      reviewLogs.put(reviewLog);
+      return { card: updated, reviewLog };
+    });
+  }
+
+  async function undoReview(payload) {
+    if (!payload || !payload.cardSnapshot || !payload.reviewLogId) throw new Error('Nothing to undo.');
+    return tx(['cards', 'reviewLogs'], 'readwrite', async ({ cards, reviewLogs }) => {
+      const snapshot = prepareCardForWrite({ ...payload.cardSnapshot }, { preserveTimestamps: true });
+      cards.put(snapshot);
+      reviewLogs.delete(payload.reviewLogId);
+      return snapshot;
+    });
+  }
+
+  async function clearReviewLogs() {
+    return tx(['reviewLogs'], 'readwrite', async ({ reviewLogs }) => {
+      reviewLogs.clear();
+      return true;
+    });
+  }
+
+  async function getSetting(key, fallback) {
+    const record = await tx(['meta'], 'readonly', async ({ meta }) => reqToPromise(meta.get(key)));
+    if (!record) return fallback;
+    return clone(record.value);
+  }
+
+  async function setSetting(key, value) {
+    return tx(['meta'], 'readwrite', async ({ meta }) => {
+      meta.put({ key, value: clone(value) });
+      return true;
+    });
+  }
+
+  async function listMeta() {
+    const records = await tx(['meta'], 'readonly', async ({ meta }) => reqToPromise(meta.getAll()));
+    return (records || []).map(normalizeMetaRecord).filter(Boolean);
+  }
+
+  async function exportAll() {
+    const [decks, cards, reviewLogs, media, meta] = await Promise.all([listDecks(), listCards(), listReviewLogs(), listMedia(), listMeta()]);
+    return { decks, cards, reviewLogs, media, meta };
+  }
+
+  async function replaceAll(payload) {
+    const decks = (payload?.decks || []).map((item) => prepareDeckForWrite(item, { preserveTimestamps: true }));
+    const cards = (payload?.cards || []).map((item) => prepareCardForWrite(item, { preserveTimestamps: true }));
+    const reviewLogs = (payload?.reviewLogs || []).map(normalizeReviewLog).filter(Boolean);
+    const media = (payload?.media || []).map((item) => prepareMediaForWrite(item, { preserveTimestamps: true }));
+    const meta = (payload?.meta || []).map(normalizeMetaRecord).filter(Boolean);
+
+    const deckIds = new Set(decks.map((deck) => deck.id));
+    cards.forEach((card) => {
+      if (!deckIds.has(card.deckId)) throw new Error(`Card references missing deck: ${card.deckId}`);
+    });
+    const mediaIds = new Set(media.map((item) => item.id));
+    cards.forEach((card) => {
+      [...card.frontImageIds, ...card.backImageIds].forEach((mediaId) => {
+        if (!mediaIds.has(mediaId)) throw new Error(`Card references missing image: ${mediaId}`);
+      });
+    });
+    const cardIds = new Set(cards.map((card) => card.id));
+    reviewLogs.forEach((log) => {
+      if (!cardIds.has(log.cardId)) throw new Error(`Review log references missing card: ${log.cardId}`);
+      if (!deckIds.has(log.deckId)) throw new Error(`Review log references missing deck: ${log.deckId}`);
+    });
+
+    const refCounts = buildRefCountsFromCards(cards);
+    const mediaFinal = media.map((item) => ({ ...item, refCount: refCounts.get(item.id) || 0 }));
+
+    return tx(['decks', 'cards', 'reviewLogs', 'media', 'meta'], 'readwrite', async ({ decks: deckStore, cards: cardStore, reviewLogs: logStore, media: mediaStore, meta: metaStore }) => {
+      deckStore.clear();
+      cardStore.clear();
+      logStore.clear();
+      mediaStore.clear();
+      metaStore.clear();
+      decks.forEach((deck) => deckStore.put(deck));
+      cards.forEach((card) => cardStore.put(card));
+      reviewLogs.forEach((log) => logStore.put(log));
+      mediaFinal.forEach((item) => mediaStore.put(item));
+      meta.forEach((item) => metaStore.put(item));
+      return true;
+    });
+  }
+
+  async function wipeAll() {
+    return tx(['decks', 'cards', 'reviewLogs', 'media', 'meta'], 'readwrite', async ({ decks, cards, reviewLogs, media, meta }) => {
+      decks.clear();
+      cards.clear();
+      reviewLogs.clear();
+      media.clear();
+      meta.clear();
+      return true;
+    });
+  }
+
+  window.DB = {
+    DB_NAME,
+    DB_VERSION,
+    DEFAULT_DECK_NAME,
+    CARD_STATES,
+    RATINGS,
+    MAX_IMAGE_BYTES,
+    openDB,
+    nowISO,
+    clone,
+    id,
+    normalizeDeckForRead,
+    prepareDeckForWrite,
+    normalizeCardForRead,
+    prepareCardForWrite,
+    normalizeReviewLog,
+    normalizeMediaForRead,
+    prepareMediaForWrite,
+    ensureDefaultDeck,
+    listDecks,
+    getDeck,
+    createDeck,
+    renameDeck,
+    deleteDeck,
+    listCards,
+    getCard,
+    getCardsByIds,
+    getCardsByDeck,
+    bulkCreateCards,
+    createCard,
+    updateCard,
+    deleteCard,
+    toggleSuspend,
+    bulkMoveCards,
+    bulkSuspendCards,
+    bulkResetScheduling,
+    bulkDeleteCards,
+    countCards,
+    countReviewLogs,
+    countMedia,
+    countMeta,
+    getStorageSummary,
+    getReviewScopeSnapshot,
+    getReviewQueueSnapshot,
+    getTodayNewStudiedCount,
+    findNextDue,
+    getDashboardSnapshot,
+    searchCards,
+    createMediaFromFile,
+    getMedia,
+    listMedia,
+    deleteMedia,
+    deleteMediaIfUnused,
+    findOrphanMediaIds,
+    cleanupOrphanMedia,
+    listReviewLogs,
+    applyReview,
+    undoReview,
+    clearReviewLogs,
+    getSetting,
+    setSetting,
+    listMeta,
+    exportAll,
+    replaceAll,
+    wipeAll,
+  };
+})();
+
+
+===== scheduler.js =====
+(function () {
+  function addDays(date, count) {
+    const next = new Date(date.getTime());
+    next.setDate(next.getDate() + count);
+    return next;
+  }
+
+  function addMinutes(date, count) {
+    const next = new Date(date.getTime());
+    next.setMinutes(next.getMinutes() + count);
+    return next;
+  }
+
+  function round(value) {
+    return Math.round(Number(value || 0));
+  }
+
+  function formatDelay(fromDate, toDate) {
+    const diffMs = Math.max(0, toDate.getTime() - fromDate.getTime());
+    const minutes = Math.round(diffMs / 60000);
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.round(minutes / 60);
+    if (hours < 48) return `${hours}h`;
+    const days = Math.round(hours / 24);
+    return `${days}d`;
+  }
+
+  function newCardDefaults() {
+    return {
+      state: 'new',
+      dueAt: new Date().toISOString(),
+      intervalDays: 0,
+      easeFactor: 2.5,
+      reps: 0,
+      lapses: 0,
+      lastReviewedAt: null,
+      lastRating: null,
+      lastReviewIntervalDays: 0,
+      suspended: false,
+    };
+  }
+
+  function computeUpdates(card, rating, now) {
+    if (!window.DB.RATINGS.includes(rating)) throw new Error('Invalid rating.');
+    if (!window.DB.CARD_STATES.includes(card.state)) throw new Error('Invalid card state.');
+
+    const updates = {
+      lastReviewedAt: now.toISOString(),
+      lastRating: rating,
+      lastReviewIntervalDays: card.lastReviewIntervalDays || 0,
+      reps: card.reps || 0,
+      lapses: card.lapses || 0,
+      easeFactor: card.easeFactor || 2.5,
+      intervalDays: card.intervalDays || 0,
+      state: card.state,
+      dueAt: card.dueAt,
+    };
+
+    if (card.state === 'new') {
+      if (rating === 'again') {
+        updates.state = 'learning';
+        updates.dueAt = addMinutes(now, 1).toISOString();
+      }
+      if (rating === 'hard') {
+        updates.state = 'learning';
+        updates.dueAt = addMinutes(now, 10).toISOString();
+      }
+      if (rating === 'good') {
+        updates.state = 'review';
+        updates.intervalDays = 1;
+        updates.dueAt = addDays(now, 1).toISOString();
+        updates.reps = (card.reps || 0) + 1;
+      }
+      if (rating === 'easy') {
+        updates.state = 'review';
+        updates.intervalDays = 4;
+        updates.easeFactor = Number(((card.easeFactor || 2.5) + 0.05).toFixed(2));
+        updates.dueAt = addDays(now, 4).toISOString();
+        updates.reps = (card.reps || 0) + 1;
+      }
+    } else if (card.state === 'learning') {
+      if (rating === 'again') {
+        updates.state = 'learning';
+        updates.dueAt = addMinutes(now, 1).toISOString();
+      }
+      if (rating === 'hard') {
+        updates.state = 'learning';
+        updates.dueAt = addMinutes(now, 10).toISOString();
+      }
+      if (rating === 'good') {
+        updates.state = 'review';
+        updates.intervalDays = 1;
+        updates.dueAt = addDays(now, 1).toISOString();
+        updates.reps = (card.reps || 0) + 1;
+      }
+      if (rating === 'easy') {
+        updates.state = 'review';
+        updates.intervalDays = 4;
+        updates.easeFactor = Number(((card.easeFactor || 2.5) + 0.05).toFixed(2));
+        updates.dueAt = addDays(now, 4).toISOString();
+        updates.reps = (card.reps || 0) + 1;
+      }
+    } else if (card.state === 'review') {
+      if (rating === 'again') {
+        updates.state = 'relearning';
+        updates.lastReviewIntervalDays = card.intervalDays;
+        updates.lapses = (card.lapses || 0) + 1;
+        updates.easeFactor = Math.max(1.3, Number(((card.easeFactor || 2.5) - 0.2).toFixed(2)));
+        updates.intervalDays = 1;
+        updates.dueAt = addMinutes(now, 10).toISOString();
+      }
+      if (rating === 'hard') {
+        updates.state = 'review';
+        updates.easeFactor = Math.max(1.3, Number(((card.easeFactor || 2.5) - 0.05).toFixed(2)));
+        updates.intervalDays = Math.max(1, round((card.intervalDays || 1) * 1.2));
+        updates.dueAt = addDays(now, updates.intervalDays).toISOString();
+        updates.reps = (card.reps || 0) + 1;
+      }
+      if (rating === 'good') {
+        updates.state = 'review';
+        updates.intervalDays = Math.max(1, round((card.intervalDays || 1) * (card.easeFactor || 2.5)));
+        updates.dueAt = addDays(now, updates.intervalDays).toISOString();
+        updates.reps = (card.reps || 0) + 1;
+      }
+      if (rating === 'easy') {
+        updates.state = 'review';
+        updates.easeFactor = Number(((card.easeFactor || 2.5) + 0.05).toFixed(2));
+        updates.intervalDays = Math.max(1, round((card.intervalDays || 1) * updates.easeFactor * 1.3));
+        updates.dueAt = addDays(now, updates.intervalDays).toISOString();
+        updates.reps = (card.reps || 0) + 1;
+      }
+    } else if (card.state === 'relearning') {
+      if (rating === 'again') {
+        updates.state = 'relearning';
+        updates.dueAt = addMinutes(now, 10).toISOString();
+      }
+      if (rating === 'hard') {
+        updates.state = 'review';
+        updates.intervalDays = 1;
+        updates.dueAt = addDays(now, 1).toISOString();
+        updates.reps = (card.reps || 0) + 1;
+      }
+      if (rating === 'good') {
+        updates.state = 'review';
+        updates.intervalDays = Math.max(1, round((card.lastReviewIntervalDays || 1) * 0.5));
+        updates.dueAt = addDays(now, updates.intervalDays).toISOString();
+        updates.reps = (card.reps || 0) + 1;
+      }
+      if (rating === 'easy') {
+        updates.state = 'review';
+        updates.intervalDays = Math.max(3, round((card.lastReviewIntervalDays || 1) * 0.75));
+        updates.dueAt = addDays(now, updates.intervalDays).toISOString();
+        updates.reps = (card.reps || 0) + 1;
+      }
+    }
+
+    return updates;
+  }
+
+  function applyRating(card, rating) {
+    const now = new Date();
+    const updates = computeUpdates(card, rating, now);
+    const nextCard = {
+      ...card,
+      ...updates,
+      updatedAt: now.toISOString(),
+    };
+    const reviewLog = {
+      id: window.DB.id('log'),
+      cardId: card.id,
+      deckId: card.deckId,
+      timestamp: now.toISOString(),
+      rating,
+      previousState: card.state,
+      newState: nextCard.state,
+      previousIntervalDays: card.intervalDays || 0,
+      newIntervalDays: nextCard.intervalDays || 0,
+      previousEaseFactor: Number((card.easeFactor || 2.5).toFixed(2)),
+      newEaseFactor: Number((nextCard.easeFactor || 2.5).toFixed(2)),
+      studySeconds: 0,
+    };
+    return { timestamp: now.toISOString(), card: nextCard, reviewLog };
+  }
+
+  function getRatingPreview(card, rating) {
+    const now = new Date();
+    const updates = computeUpdates(card, rating, now);
+    return {
+      state: updates.state,
+      dueAt: updates.dueAt,
+      delay: formatDelay(now, new Date(updates.dueAt)),
+    };
+  }
+
+  function getRatingPreviewLabel(card, rating) {
+    const preview = getRatingPreview(card, rating);
+    const exact = new Date(preview.dueAt).toLocaleString([], {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+    return `${preview.delay} · ${exact}`;
+  }
+
+  window.Scheduler = {
+    newCardDefaults,
+    applyRating,
+    getRatingPreview,
+    getRatingPreviewLabel,
+    formatDelay,
+  };
+})();
+
+
+===== importer.js =====
+(function () {
+  function parseDelimitedLine(line, delimiter) {
+    const values = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let index = 0; index < line.length; index += 1) {
+      const char = line[index];
+      const next = line[index + 1];
+      if (char === '"') {
+        if (inQuotes && next === '"') {
+          current += '"';
+          index += 1;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+      if (char === delimiter && !inQuotes) {
+        values.push(current.trim());
+        current = '';
+        continue;
+      }
+      current += char;
+    }
+    if (inQuotes) return { ok: false, reason: 'Unclosed quote' };
+    values.push(current.trim());
+    return { ok: true, values };
+  }
+
+  function normalizeTags(raw) {
+    if (!raw) return [];
+    const seen = new Set();
+    return String(raw)
+      .split(/[;,|]/)
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .filter((item) => {
+        const key = item.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }
+
+  function parseTextToCards(text) {
+    const rows = String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/);
+    const imported = [];
+    const skipped = [];
+    rows.forEach((rawLine, index) => {
+      const row = index + 1;
+      if (!rawLine.trim()) return;
+      const parsed = parseDelimitedLine(rawLine, ';');
+      if (!parsed.ok) {
+        skipped.push({ row, reason: parsed.reason });
+        return;
+      }
+      if (parsed.values.length !== 2) {
+        skipped.push({ row, reason: 'Expected exactly one semicolon separator' });
+        return;
+      }
+      const question = String(parsed.values[0] || '').trim();
+      const answer = String(parsed.values[1] || '').trim();
+      if (!question || !answer) {
+        skipped.push({ row, reason: 'Front or back is empty' });
+        return;
+      }
+      imported.push({ row, question, answer, deckName: '', tags: [] });
+    });
+    return { fileType: 'txt', imported, skipped };
+  }
+
+  function parseCSVText(text) {
+    const rows = String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/);
+    const imported = [];
+    const skipped = [];
+    let headerMap = null;
+    rows.forEach((rawLine, index) => {
+      const row = index + 1;
+      if (!rawLine.trim()) return;
+      const parsed = parseDelimitedLine(rawLine, ',');
+      if (!parsed.ok) {
+        skipped.push({ row, reason: parsed.reason });
+        return;
+      }
+      if (!headerMap) {
+        const headers = parsed.values.map((value) => String(value || '').trim().toLowerCase());
+        const frontIndex = headers.indexOf('front');
+        const backIndex = headers.indexOf('back');
+        if (frontIndex === -1 || backIndex === -1) {
+          skipped.push({ row, reason: 'CSV header must include front and back columns' });
+          return;
+        }
+        headerMap = { front: frontIndex, back: backIndex, deck: headers.indexOf('deck'), tags: headers.indexOf('tags') };
+        return;
+      }
+      const question = String(parsed.values[headerMap.front] || '').trim();
+      const answer = String(parsed.values[headerMap.back] || '').trim();
+      const deckName = headerMap.deck >= 0 ? String(parsed.values[headerMap.deck] || '').trim() : '';
+      const tags = headerMap.tags >= 0 ? normalizeTags(parsed.values[headerMap.tags]) : [];
+      if (!question || !answer) {
+        skipped.push({ row, reason: 'Front or back is empty' });
+        return;
+      }
+      imported.push({ row, question, answer, deckName, tags });
+    });
+    if (!headerMap) {
+      return { fileType: 'csv', imported: [], skipped: [{ row: 1, reason: 'CSV file is missing a valid header row' }] };
+    }
+    return { fileType: 'csv', imported, skipped };
+  }
+
+  function parseImportFile(fileName, text) {
+    const lower = String(fileName || '').toLowerCase();
+    if (lower.endsWith('.csv')) return parseCSVText(text);
+    return parseTextToCards(text);
+  }
+
+  function duplicateKey(deckId, question, answer) {
+    return `${String(deckId || '').trim().toLowerCase()}::${String(question || '').trim().toLowerCase()}::${String(answer || '').trim().toLowerCase()}`;
+  }
+
+  async function detectImportDuplicates(rows, defaultDeckId) {
+    const existingCards = await window.DB.listCards();
+    const existingKeys = new Set(existingCards.map((card) => duplicateKey(card.deckId, card.question, card.answer)));
+    const seenInFile = new Set();
+    const accepted = [];
+    const duplicates = [];
+    rows.forEach((row) => {
+      const deckId = row.deckId || defaultDeckId || '';
+      const key = duplicateKey(deckId, row.question, row.answer);
+      if (existingKeys.has(key) || seenInFile.has(key)) {
+        duplicates.push({ ...row, deckId });
+        return;
+      }
+      seenInFile.add(key);
+      accepted.push({ ...row, deckId });
+    });
+    return { accepted, duplicates };
+  }
+
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = String(reader.result || '');
+        const commaIndex = result.indexOf(',');
+        resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
+      };
+      reader.onerror = () => reject(reader.error || new Error('Failed reading image.'));
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function base64ToBlob(base64, type) {
+    try {
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+      return new Blob([bytes], { type: type || 'application/octet-stream' });
+    } catch (error) {
+      throw new Error('Backup contains invalid image data.');
+    }
+  }
+
+  async function exportBackup() {
+    const all = await window.DB.exportAll();
+    const media = [];
+    for (const item of all.media) {
+      media.push({
+        id: item.id,
+        name: item.name,
+        type: item.type,
+        size: item.size,
+        createdAt: item.createdAt,
+        refCount: item.refCount,
+        data: await blobToBase64(item.blob),
+      });
+    }
+    const payload = {
+      app: 'offline-flashcards',
+      version: 5,
+      exportedAt: new Date().toISOString(),
+      manifest: {
+        deckCount: all.decks.length,
+        cardCount: all.cards.length,
+        reviewLogCount: all.reviewLogs.length,
+        mediaCount: media.length,
+        metaCount: all.meta.length,
+      },
+      decks: all.decks,
+      cards: all.cards,
+      reviewLogs: all.reviewLogs,
+      media,
+      meta: all.meta,
+    };
+    return JSON.stringify(payload, null, 2);
+  }
+
+  function downloadFile(filename, content, mime) {
+    const blob = content instanceof Blob ? content : new Blob([content], { type: mime || 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1200);
+  }
+
+  function validateBackupPayload(payload) {
+    if (!payload || typeof payload !== 'object') throw new Error('Invalid backup format.');
+    if (payload.app !== 'offline-flashcards') throw new Error('This file is not an Offline Flashcards backup.');
+    if (!Array.isArray(payload.decks)) throw new Error('Backup is missing decks.');
+    if (!Array.isArray(payload.cards)) throw new Error('Backup is missing cards.');
+    if (!Array.isArray(payload.reviewLogs)) throw new Error('Backup is missing review logs.');
+    if (!Array.isArray(payload.media)) throw new Error('Backup is missing media.');
+    if (!Array.isArray(payload.meta)) throw new Error('Backup is missing settings/meta.');
+
+    const decks = payload.decks.map((item, index) => {
+      try {
+        return window.DB.prepareDeckForWrite(item, { preserveTimestamps: true });
+      } catch (error) {
+        throw new Error(`Deck ${index + 1}: ${error.message}`);
+      }
+    });
+    const deckIds = new Set(decks.map((deck) => deck.id));
+
+    const media = payload.media.map((item, index) => {
+      if (!item || typeof item.id !== 'string' || typeof item.data !== 'string') {
+        throw new Error(`Media ${index + 1}: invalid media record.`);
+      }
+      const blob = base64ToBlob(item.data, item.type);
+      return window.DB.prepareMediaForWrite({
+        id: item.id,
+        name: item.name,
+        type: item.type,
+        size: item.size || blob.size,
+        blob,
+        createdAt: item.createdAt,
+        refCount: 0,
+      }, { preserveTimestamps: true });
+    });
+    const mediaIds = new Set(media.map((item) => item.id));
+
+    const cards = payload.cards.map((item, index) => {
+      try {
+        return window.DB.prepareCardForWrite(item, { preserveTimestamps: true });
+      } catch (error) {
+        throw new Error(`Card ${index + 1}: ${error.message}`);
+      }
+    });
+    cards.forEach((card, index) => {
+      if (!deckIds.has(card.deckId)) throw new Error(`Card ${index + 1}: references missing deck ${card.deckId}.`);
+      [...(card.frontImageIds || []), ...(card.backImageIds || [])].forEach((mediaId) => {
+        if (!mediaIds.has(mediaId)) throw new Error(`Card ${index + 1}: references missing image ${mediaId}.`);
+      });
+    });
+
+    const cardIds = new Set(cards.map((card) => card.id));
+    const reviewLogs = payload.reviewLogs.map((item, index) => {
+      const normalized = window.DB.normalizeReviewLog(item);
+      if (!normalized) throw new Error(`Review log ${index + 1}: invalid review log.`);
+      return normalized;
+    });
+    reviewLogs.forEach((log, index) => {
+      if (!cardIds.has(log.cardId)) throw new Error(`Review log ${index + 1}: references missing card ${log.cardId}.`);
+      if (!deckIds.has(log.deckId)) throw new Error(`Review log ${index + 1}: references missing deck ${log.deckId}.`);
+    });
+
+    const meta = payload.meta.map((item, index) => {
+      const normalized = { key: String(item?.key || ''), value: item?.value };
+      if (!normalized.key) throw new Error(`Meta record ${index + 1}: invalid key.`);
+      return normalized;
+    });
+
+    return { decks, cards, reviewLogs, media, meta, manifest: payload.manifest || null };
+  }
+
+  async function restoreBackup(jsonText) {
+    let payload;
+    try {
+      payload = JSON.parse(jsonText);
+    } catch (error) {
+      throw new Error('Invalid JSON backup.');
+    }
+    const validated = validateBackupPayload(payload);
+    await window.DB.replaceAll(validated);
+    return {
+      decks: validated.decks.length,
+      cards: validated.cards.length,
+      reviewLogs: validated.reviewLogs.length,
+      media: validated.media.length,
+      meta: validated.meta.length,
+    };
+  }
+
+  window.Importer = {
+    parseDelimitedLine,
+    normalizeTags,
+    parseTextToCards,
+    parseCSVText,
+    parseImportFile,
+    detectImportDuplicates,
+    blobToBase64,
+    base64ToBlob,
+    exportBackup,
+    downloadFile,
+    validateBackupPayload,
+    restoreBackup,
+  };
+})();
+
+
+===== stats.js =====
+(function () {
+  function toLocalDateKey(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function startOfToday() {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+
+  function endOfToday() {
+    const date = new Date();
+    date.setHours(23, 59, 59, 999);
+    return date;
+  }
+
+  function formatDateTime(value) {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    return date.toLocaleString([], {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  }
+
+  function formatDate(value) {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    return date.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  function formatDuration(seconds) {
+    const safe = Math.max(0, Number(seconds || 0));
+    const mins = Math.floor(safe / 60);
+    const secs = Math.round(safe % 60);
+    if (mins === 0) return `${secs}s`;
+    return `${mins}m ${secs}s`;
+  }
+
+  function formatRelativeFuture(value) {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    const diffMs = date.getTime() - Date.now();
+    if (diffMs <= 0) return 'Now';
+    const minutes = Math.round(diffMs / 60000);
+    if (minutes < 60) return `In ${minutes} minute${minutes === 1 ? '' : 's'}`;
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return `In ${hours} hour${hours === 1 ? '' : 's'}`;
+    const days = Math.round(hours / 24);
+    return `In ${days} day${days === 1 ? '' : 's'}`;
+  }
+
+  function dueNow(card) {
+    return new Date(card.dueAt).getTime() <= Date.now();
+  }
+
+  function dueToday(card) {
+    return new Date(card.dueAt).getTime() <= endOfToday().getTime();
+  }
+
+  function buildDailyStatRecord(dateKey) {
+    return {
+      dateKey,
+      cardsReviewed: 0,
+      againCount: 0,
+      hardCount: 0,
+      goodCount: 0,
+      easyCount: 0,
+      totalStudyTimeSeconds: 0,
+      decksStudied: new Set(),
+      learnedCards: new Set(),
+      seenNewCards: new Set(),
+    };
+  }
+
+  function computeDailyStats(logs) {
+    const grouped = new Map();
+    logs.forEach((log) => {
+      if (!log || !log.timestamp) return;
+      const key = toLocalDateKey(log.timestamp);
+      if (!key) return;
+      if (!grouped.has(key)) grouped.set(key, buildDailyStatRecord(key));
+      const bucket = grouped.get(key);
+      bucket.cardsReviewed += 1;
+      bucket.totalStudyTimeSeconds += Number(log.studySeconds || 0);
+      bucket.decksStudied.add(log.deckId);
+      if (log.rating === 'again') bucket.againCount += 1;
+      if (log.rating === 'hard') bucket.hardCount += 1;
+      if (log.rating === 'good') bucket.goodCount += 1;
+      if (log.rating === 'easy') bucket.easyCount += 1;
+      if (log.previousState === 'new') bucket.seenNewCards.add(log.cardId);
+      if (log.newState === 'review' && ['new', 'learning', 'relearning'].includes(log.previousState)) {
+        bucket.learnedCards.add(log.cardId);
+      }
+    });
+    return Array.from(grouped.values())
+      .map((item) => ({
+        dateKey: item.dateKey,
+        cardsReviewed: item.cardsReviewed,
+        againCount: item.againCount,
+        hardCount: item.hardCount,
+        goodCount: item.goodCount,
+        easyCount: item.easyCount,
+        newCardsStudied: item.seenNewCards.size,
+        cardsLearned: item.learnedCards.size,
+        totalStudyTimeSeconds: item.totalStudyTimeSeconds,
+        decksStudiedCount: item.decksStudied.size,
+      }))
+      .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+  }
+
+  function getTodayNewStudiedCount(logs, deckId) {
+    const todayKey = toLocalDateKey(new Date());
+    const seen = new Set();
+    logs.forEach((log) => {
+      if (toLocalDateKey(log.timestamp) !== todayKey) return;
+      if (deckId && log.deckId !== deckId) return;
+      if (log.previousState === 'new') seen.add(log.cardId);
+    });
+    return seen.size;
+  }
+
+  function computePerDeckStats(cards, decks, logs) {
+    const todayKey = toLocalDateKey(new Date());
+    return decks.map((deck) => {
+      const deckCards = cards.filter((card) => card.deckId === deck.id);
+      const deckLogs = logs.filter((log) => log.deckId === deck.id);
+      const completedToday = new Set(deckLogs.filter((log) => toLocalDateKey(log.timestamp) === todayKey).map((log) => log.cardId)).size;
+      const mastered = deckCards.filter((card) => card.state === 'review' && card.intervalDays >= 21).length;
+      return {
+        deckId: deck.id,
+        deckName: deck.name,
+        totalCards: deckCards.length,
+        dueNow: deckCards.filter((card) => !card.suspended && dueNow(card)).length,
+        dueToday: deckCards.filter((card) => !card.suspended && dueToday(card)).length,
+        completedToday,
+        totalReviewsAllTime: deckLogs.length,
+        lapsesAllTime: deckCards.reduce((sum, card) => sum + Number(card.lapses || 0), 0),
+        masteryPercentage: deckCards.length ? (mastered / deckCards.length) * 100 : 0,
+        lastStudied: deckLogs.length ? deckLogs[deckLogs.length - 1].timestamp : null,
+      };
+    }).sort((a, b) => a.deckName.localeCompare(b.deckName));
+  }
+
+  function computeDashboard(cards, decks, logs) {
+    const perDeck = computePerDeckStats(cards, decks, logs);
+    const mastered = cards.filter((card) => card.state === 'review' && card.intervalDays >= 21).length;
+    return {
+      totalCards: cards.length,
+      totalDueNow: cards.filter((card) => !card.suspended && dueNow(card)).length,
+      totalDueToday: cards.filter((card) => !card.suspended && dueToday(card)).length,
+      totalNew: cards.filter((card) => card.state === 'new').length,
+      totalLearning: cards.filter((card) => card.state === 'learning').length,
+      totalRelearning: cards.filter((card) => card.state === 'relearning').length,
+      totalReview: cards.filter((card) => card.state === 'review').length,
+      totalMastery: cards.length ? (mastered / cards.length) * 100 : 0,
+      deckCount: decks.length,
+      perDeck,
+    };
+  }
+
+  function buildTopStrip(cards, logs, dailyStats) {
+    const todayKey = toLocalDateKey(new Date());
+    const todayStats = dailyStats.find((item) => item.dateKey === todayKey) || {
+      cardsReviewed: 0,
+      newCardsStudied: 0,
+      cardsLearned: 0,
+      againCount: 0,
+      totalStudyTimeSeconds: 0,
+      decksStudiedCount: 0,
+    };
+    const retention = todayStats.cardsReviewed ? Math.max(0, ((todayStats.cardsReviewed - todayStats.againCount) / todayStats.cardsReviewed) * 100) : 0;
+    const mastered = cards.filter((card) => card.state === 'review' && card.intervalDays >= 21).length;
+    return [
+      { label: 'Reviewed today', value: todayStats.cardsReviewed },
+      { label: 'New studied today', value: todayStats.newCardsStudied },
+      { label: 'Learned today', value: todayStats.cardsLearned },
+      { label: 'Retention today', value: `${retention.toFixed(0)}%` },
+      { label: 'Study time today', value: formatDuration(todayStats.totalStudyTimeSeconds) },
+      { label: 'Mastered cards', value: mastered },
+      { label: 'Total logs', value: logs.length },
+      { label: 'Decks studied today', value: todayStats.decksStudiedCount },
+    ];
+  }
+
+  window.Stats = {
+    toLocalDateKey,
+    startOfToday,
+    endOfToday,
+    formatDateTime,
+    formatDate,
+    formatDuration,
+    formatRelativeFuture,
+    dueNow,
+    dueToday,
+    computeDailyStats,
+    computePerDeckStats,
+    computeDashboard,
+    getTodayNewStudiedCount,
+    buildTopStrip,
+  };
+})();
+
+
+===== ui.js =====
+(function () {
+  const activeObjectUrls = new Set();
+
+  function esc(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function revokeObjectUrls() {
+    activeObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+    activeObjectUrls.clear();
+  }
+
+  function trackUrl(blob) {
+    const url = URL.createObjectURL(blob);
+    activeObjectUrls.add(url);
+    return url;
+  }
+
+  function setTheme(theme) {
+    document.body.classList.toggle('dark-theme', theme === 'dark');
+    const select = document.getElementById('theme-select');
+    if (select) select.value = theme === 'dark' ? 'dark' : 'light';
+  }
+
+  function setActiveView(viewId) {
+    document.querySelectorAll('.view').forEach((section) => section.classList.toggle('active', section.id === `view-${viewId}`));
+    document.querySelectorAll('.nav-link').forEach((button) => button.classList.toggle('active', button.dataset.view === viewId));
+  }
+
+  function showMessage(text, kind) {
+    const region = document.getElementById('message-region');
+    if (!region) return;
+    region.innerHTML = text ? `<div class="message-banner ${kind || 'info'}">${esc(text)}</div>` : '';
+  }
+
+  function toast(text, kind) {
+    const region = document.getElementById('toast-region');
+    if (!region) return;
+    const node = document.createElement('div');
+    node.className = `toast ${kind || 'info'}`;
+    node.textContent = text;
+    region.appendChild(node);
+    setTimeout(() => {
+      node.style.opacity = '0';
+      node.style.transform = 'translateY(4px)';
+      setTimeout(() => node.remove(), 220);
+    }, 2600);
+  }
+
+  function renderStorageSummary(summary) {
+    const root = document.getElementById('storage-summary');
+    if (!root) return;
+    const items = [
+      ['Decks', summary.deckCount],
+      ['Cards', summary.cardCount],
+      ['Review logs', summary.reviewLogCount],
+      ['Settings', summary.metaCount],
+      ['Media', summary.mediaCount],
+    ];
+    root.innerHTML = items.map(([label, value]) => `<div class="storage-card"><span class="stat-label">${esc(label)}</span><strong>${esc(value)}</strong></div>`).join('');
+  }
+
+  function renderDashboard(snapshot) {
+    document.getElementById('hero-due-now').textContent = snapshot.totalDueNow;
+    document.getElementById('hero-due-today').textContent = snapshot.totalDueToday;
+    const statRoot = document.getElementById('dashboard-stat-cards');
+    statRoot.innerHTML = [
+      ['Total cards', snapshot.totalCards],
+      ['New', snapshot.totalNew],
+      ['Learning', snapshot.totalLearning],
+      ['Relearning', snapshot.totalRelearning],
+      ['Review', snapshot.totalReview],
+      ['Mastery', `${snapshot.totalMastery.toFixed(0)}%`],
+      ['Decks', snapshot.deckCount],
+    ].map(([label, value]) => `<div class="stat-card"><span class="stat-label">${esc(label)}</span><strong>${esc(value)}</strong></div>`).join('');
+
+    const deckRoot = document.getElementById('dashboard-deck-grid');
+    if (!snapshot.perDeck.length) {
+      deckRoot.innerHTML = '<div class="empty-box">No decks yet. Create one in Decks or import a file.</div>';
+      return;
+    }
+    deckRoot.innerHTML = snapshot.perDeck.map((deck) => `
+      <article class="deck-card">
+        <div>
+          <div class="eyebrow">${esc(deck.deckName)}</div>
+          <h4>${esc(deck.deckName)}</h4>
+          <div class="deck-list-meta">
+            <span class="pill">${deck.totalCards} cards</span>
+            <span class="pill">${deck.completedToday} done today</span>
+          </div>
+        </div>
+        <div class="deck-card-stats">
+          <div class="deck-card-stat"><span class="stat-label">Due now</span><strong>${deck.dueNow}</strong></div>
+          <div class="deck-card-stat"><span class="stat-label">Due today</span><strong>${deck.dueToday}</strong></div>
+          <div class="deck-card-stat"><span class="stat-label">Reviews</span><strong>${deck.totalReviewsAllTime}</strong></div>
+          <div class="deck-card-stat"><span class="stat-label">Mastery</span><strong>${deck.masteryPercentage.toFixed(0)}%</strong></div>
+        </div>
+        <div class="button-row left-aligned">
+          <button class="btn btn-secondary" data-review-deck="${esc(deck.deckId)}">Review deck</button>
+        </div>
+      </article>
+    `).join('');
+  }
+
+  function fillDeckSelect(selectId, decks, options) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    const current = select.value;
+    const items = [];
+    if (options?.includeAll) items.push(`<option value="all">${esc(options.allLabel || 'All decks')}</option>`);
+    if (options?.includeNone) items.push(`<option value="">${esc(options.noneLabel || 'Choose one')}</option>`);
+    decks.forEach((deck) => items.push(`<option value="${esc(deck.id)}">${esc(deck.name)}</option>`));
+    select.innerHTML = items.join('');
+    if ([...select.options].find((option) => option.value === current)) select.value = current;
+  }
+
+  function renderDeckList(decks, perDeck) {
+    const root = document.getElementById('deck-list');
+    if (!root) return;
+    if (!decks.length) {
+      root.innerHTML = '<div class="empty-box">No decks yet.</div>';
+      return;
+    }
+    const statsById = new Map((perDeck || []).map((item) => [item.deckId, item]));
+    root.innerHTML = decks.map((deck) => {
+      const stats = statsById.get(deck.id) || { totalCards: 0, dueNow: 0, dueToday: 0, completedToday: 0, masteryPercentage: 0, totalReviewsAllTime: 0 };
+      return `
+        <article class="deck-list-item">
+          <div>
+            <div class="eyebrow">Deck</div>
+            <h4>${esc(deck.name)}</h4>
+            <div class="deck-list-meta">
+              <span class="pill">${stats.totalCards} cards</span>
+              <span class="pill">${stats.dueNow} due now</span>
+              <span class="pill">${stats.completedToday} done today</span>
+              <span class="pill">${stats.masteryPercentage.toFixed(0)}% mastery</span>
+            </div>
+          </div>
+          <div class="button-row left-aligned">
+            <button class="btn btn-secondary" data-review-deck="${esc(deck.id)}">Review</button>
+            <button class="btn btn-secondary" data-rename-deck="${esc(deck.id)}">Rename</button>
+            <button class="btn btn-danger" data-delete-deck="${esc(deck.id)}">Delete</button>
+          </div>
+        </article>
+      `;
+    }).join('');
+  }
+
+  async function renderMediaDrafts(containerId, drafts) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+    for (const draft of drafts) {
+      let url = draft.objectUrl || null;
+      if (!url && draft.blob) url = trackUrl(draft.blob);
+      const card = document.createElement('div');
+      card.className = 'media-thumb';
+      card.innerHTML = `
+        <img alt="" src="${esc(url || '')}" />
+        <button type="button" data-remove-media="${esc(draft.localId)}">×</button>
+        <div class="media-meta">${esc(draft.name || 'image')}</div>
+      `;
+      container.appendChild(card);
+    }
+  }
+
+  function toLocalInputValue(iso) {
+    if (!iso) return '';
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return '';
+    const pad = (value) => String(value).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
+  async function populateCardEditor(card, decks, drafts) {
+    fillDeckSelect('card-deck', decks);
+    document.getElementById('card-form-title').textContent = card ? 'Edit card' : 'Add card';
+    document.getElementById('card-id').value = card?.id || '';
+    document.getElementById('card-deck').value = card?.deckId || (decks[0] ? decks[0].id : '');
+    document.getElementById('card-question').value = card?.question || '';
+    document.getElementById('card-answer').value = card?.answer || '';
+    document.getElementById('card-tags').value = (card?.tags || []).join(', ');
+    document.getElementById('card-state').value = card?.state || 'new';
+    document.getElementById('card-due-at').value = toLocalInputValue(card?.dueAt || new Date().toISOString());
+    document.getElementById('card-interval-days').value = card?.intervalDays ?? 0;
+    document.getElementById('card-ease-factor').value = card?.easeFactor ?? 2.5;
+    document.getElementById('card-reps').value = card?.reps ?? 0;
+    document.getElementById('card-lapses').value = card?.lapses ?? 0;
+    document.getElementById('card-last-review-interval').value = card?.lastReviewIntervalDays ?? 0;
+    document.getElementById('card-suspended').checked = !!card?.suspended;
+    document.getElementById('card-advanced').open = !!card;
+    await renderMediaDrafts('card-front-preview', drafts.front || []);
+    await renderMediaDrafts('card-back-preview', drafts.back || []);
+  }
+
+  function renderManageTable(result, state) {
+    const body = document.getElementById('manage-cards-table');
+    const empty = document.getElementById('manage-empty-state');
+    if (!body || !empty) return;
+    if (!result.items.length) {
+      body.innerHTML = '';
+      empty.classList.remove('hidden');
+      empty.textContent = state.search || state.deckFilter || state.suspendFilter !== 'all'
+        ? 'No cards match the current filters.'
+        : 'No cards yet. Add one on the left or import a file.';
+    } else {
+      empty.classList.add('hidden');
+      body.innerHTML = result.items.map((card) => `
+        <tr>
+          <td class="checkbox-col"><input type="checkbox" data-select-card="${esc(card.id)}" ${state.selectedIds.has(card.id) ? 'checked' : ''} /></td>
+          <td>
+            <div class="table-title">${esc(card.question.slice(0, 120))}</div>
+            <div class="table-muted">${esc(card.answer.slice(0, 120))}</div>
+          </td>
+          <td>${esc(card.deckName || card.deckId)}</td>
+          <td>
+            <div class="badge-row">
+              <span class="tag status-${esc(card.state)}">${esc(card.state)}</span>
+              ${card.suspended ? '<span class="tag">suspended</span>' : ''}
+            </div>
+          </td>
+          <td>${esc(window.Stats.formatDateTime(card.dueAt))}</td>
+          <td><div class="badge-row">${(card.tags || []).map((tag) => `<span class="tag">${esc(tag)}</span>`).join('')}</div></td>
+          <td>${(card.frontImageIds?.length || 0) + (card.backImageIds?.length || 0)}</td>
+          <td>
+            <div class="button-row left-aligned">
+              <button class="btn btn-secondary" data-edit-card="${esc(card.id)}">Edit</button>
+              <button class="btn btn-secondary" data-toggle-suspend="${esc(card.id)}" data-next-state="${card.suspended ? 'false' : 'true'}">${card.suspended ? 'Unsuspend' : 'Suspend'}</button>
+              <button class="btn btn-danger" data-delete-card="${esc(card.id)}">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    const pagination = document.getElementById('manage-pagination');
+    const totalPages = Math.max(1, Math.ceil(result.total / state.pageSize));
+    pagination.innerHTML = `
+      <div class="table-muted">Showing ${result.total ? ((state.page - 1) * state.pageSize) + 1 : 0}-${Math.min(result.total, state.page * state.pageSize)} of ${result.total}</div>
+      <div class="button-row right-aligned">
+        <button class="btn btn-secondary" data-page="${state.page - 1}" ${state.page <= 1 ? 'disabled' : ''}>Previous</button>
+        <span class="pill">Page ${state.page} / ${totalPages}</span>
+        <button class="btn btn-secondary" data-page="${state.page + 1}" ${state.page >= totalPages ? 'disabled' : ''}>Next</button>
+      </div>
+    `;
+    document.getElementById('manage-selected-count').textContent = `${state.selectedIds.size} selected`;
+    const pageIds = new Set(result.items.map((item) => item.id));
+    const selectPage = document.getElementById('manage-select-page');
+    selectPage.checked = result.items.length > 0 && result.items.every((item) => state.selectedIds.has(item.id));
+    selectPage.indeterminate = result.items.some((item) => state.selectedIds.has(item.id)) && !selectPage.checked;
+    selectPage.dataset.pageIds = JSON.stringify([...pageIds]);
+  }
+
+  function renderImportSummary(summary) {
+    const root = document.getElementById('import-summary');
+    if (!root) return;
+    root.innerHTML = `
+      <div><strong>${esc(summary.title)}</strong></div>
+      <div class="table-muted">${esc(summary.copy)}</div>
+      ${summary.details ? `<pre>${esc(summary.details)}</pre>` : ''}
+    `;
+  }
+
+  function renderBackupSummary(summary, kind) {
+    const root = document.getElementById('backup-summary');
+    if (!root) return;
+    root.classList.toggle('danger-box', kind === 'error');
+    root.innerHTML = `<div><strong>${esc(summary)}</strong></div>`;
+  }
+
+  function renderReviewScope(scopeLabel, snapshot, remainingNew, hiddenNew) {
+    document.getElementById('review-scope-due-pill').textContent = `Due now: ${snapshot.dueNow}`;
+    document.getElementById('review-scope-today-pill').textContent = `Due today: ${snapshot.dueToday}`;
+    document.getElementById('review-scope-hidden-pill').textContent = `Hidden new: ${hiddenNew}`;
+    document.getElementById('review-new-limit-display').value = `${remainingNew}`;
+    document.getElementById('review-eyebrow').textContent = scopeLabel || 'Reviewing';
+  }
+
+  async function renderReviewCard(session) {
+    const question = document.getElementById('review-question');
+    const answer = document.getElementById('review-answer');
+    const answerWrap = document.getElementById('review-answer-wrap');
+    const showAnswerRow = document.getElementById('show-answer-row');
+    const ratingRow = document.getElementById('rating-row');
+    const panel = document.getElementById('review-panel');
+    const setup = document.getElementById('review-setup-panel');
+    const empty = document.getElementById('review-empty-panel');
+    setup.classList.add('hidden');
+    empty.classList.add('hidden');
+    panel.classList.remove('hidden');
+
+    document.getElementById('review-deck-name').textContent = session.deckName;
+    document.getElementById('review-session-meta').textContent = `${session.remainingCount} due card${session.remainingCount === 1 ? '' : 's'} left · ${session.reviewedCount} reviewed this session`;
+    document.getElementById('review-state-pill').textContent = session.card.state;
+    document.getElementById('review-due-pill').textContent = window.Stats.formatDateTime(session.card.dueAt);
+    document.getElementById('review-progress-pill').textContent = `${session.reviewedCount}/${session.totalCount}`;
+    document.getElementById('review-progress-bar').style.width = `${session.totalCount ? (session.reviewedCount / session.totalCount) * 100 : 0}%`;
+    question.textContent = session.card.question;
+    answer.textContent = session.card.answer;
+    answerWrap.classList.toggle('hidden', !session.answerShown);
+    showAnswerRow.classList.toggle('hidden', session.answerShown);
+    ratingRow.classList.toggle('hidden', !session.answerShown);
+
+    document.getElementById('undo-last-rating-btn').disabled = !session.lastReviewAction || session.busy;
+    document.getElementById('suspend-current-card-btn').disabled = !session.card || session.busy;
+    document.getElementById('edit-current-card-btn').disabled = !session.card || session.busy;
+
+    const frontRoot = document.getElementById('review-question-images');
+    const backRoot = document.getElementById('review-answer-images');
+    frontRoot.innerHTML = session.frontMedia.map((item) => `
+      <div class="media-thumb"><img alt="" src="${esc(item.url)}" /><div class="media-meta">${esc(item.name)}</div></div>
+    `).join('');
+    backRoot.innerHTML = session.backMedia.map((item) => `
+      <div class="media-thumb"><img alt="" src="${esc(item.url)}" /><div class="media-meta">${esc(item.name)}</div></div>
+    `).join('');
+
+    document.querySelectorAll('[data-preview-for]').forEach((node) => {
+      const rating = node.dataset.previewFor;
+      node.textContent = session.previews?.[rating] || '';
+    });
+  }
+
+  function renderReviewSetup(scopeName) {
+    document.getElementById('review-setup-panel').classList.remove('hidden');
+    document.getElementById('review-panel').classList.add('hidden');
+    document.getElementById('review-empty-panel').classList.add('hidden');
+    document.getElementById('review-deck-name').textContent = scopeName || 'All due cards';
+  }
+
+  function renderReviewEmpty(state) {
+    document.getElementById('review-setup-panel').classList.add('hidden');
+    document.getElementById('review-panel').classList.add('hidden');
+    document.getElementById('review-empty-panel').classList.remove('hidden');
+    document.getElementById('review-next-due-relative').textContent = state.nextDueRelative || '—';
+    document.getElementById('review-next-due-exact').textContent = state.nextDueExact || '—';
+    document.getElementById('review-hidden-new-count').textContent = state.hiddenNewCount || 0;
+    document.getElementById('review-empty-title').textContent = state.title || 'You’re caught up.';
+    document.getElementById('review-empty-subtitle').textContent = state.subtitle || 'The next card will appear here automatically when it becomes due.';
+  }
+
+  function renderStats(data) {
+    const topRoot = document.getElementById('stats-top-strip');
+    topRoot.innerHTML = data.topStrip.map((item) => `<div class="stat-card"><span class="stat-label">${esc(item.label)}</span><strong>${esc(item.value)}</strong></div>`).join('');
+
+    const dailyRoot = document.getElementById('stats-daily-chart');
+    const maxReviewed = Math.max(1, ...data.dailyStats.map((item) => item.cardsReviewed));
+    dailyRoot.innerHTML = data.dailyStats.slice(-14).map((day) => {
+      const height = Math.max(8, Math.round((day.cardsReviewed / maxReviewed) * 160));
+      return `
+        <div class="day-bar" title="${esc(day.dateKey)} · ${day.cardsReviewed} reviewed">
+          <div class="day-bar-value">${day.cardsReviewed}</div>
+          <div class="day-bar-fill" style="height:${height}px"></div>
+          <div class="day-bar-label">${esc(day.dateKey.slice(5))}</div>
+        </div>
+      `;
+    }).join('') || '<div class="empty-box">No review logs yet.</div>';
+
+    const deckBody = document.getElementById('stats-deck-table');
+    deckBody.innerHTML = data.perDeck.length ? data.perDeck.map((item) => `
+      <tr>
+        <td>${esc(item.deckName)}</td>
+        <td>${item.totalCards}</td>
+        <td>${item.dueNow}</td>
+        <td>${item.dueToday}</td>
+        <td>${item.completedToday}</td>
+        <td>${item.totalReviewsAllTime}</td>
+        <td>${item.lapsesAllTime}</td>
+        <td>${item.masteryPercentage.toFixed(0)}%</td>
+        <td>${esc(window.Stats.formatDateTime(item.lastStudied))}</td>
+      </tr>
+    `).join('') : '<tr><td colspan="9">No deck stats yet.</td></tr>';
+  }
+
+  function showConfirm(options) {
+    const dialog = document.getElementById('confirm-dialog');
+    if (!dialog) return Promise.resolve({ confirmed: false, formData: new FormData() });
+    document.getElementById('confirm-eyebrow').textContent = options?.eyebrow || 'Confirm';
+    document.getElementById('confirm-title').textContent = options?.title || 'Are you sure?';
+    document.getElementById('confirm-copy').textContent = options?.copy || 'This action cannot be undone.';
+    document.getElementById('confirm-submit').textContent = options?.confirmLabel || 'Confirm';
+    document.getElementById('confirm-submit').className = `btn ${options?.confirmVariant === 'secondary' ? 'btn-secondary' : options?.confirmVariant === 'primary' ? 'btn-primary' : 'btn-danger'}`;
+    const extra = document.getElementById('confirm-extra');
+    extra.innerHTML = options?.extraHTML || '';
+
+    return new Promise((resolve) => {
+      const handleClose = () => {
+        dialog.removeEventListener('close', handleClose);
+        resolve({ confirmed: dialog.returnValue === 'confirm', formData: new FormData(dialog.querySelector('form')) });
+      };
+      dialog.addEventListener('close', handleClose, { once: true });
+      dialog.showModal();
+    });
+  }
+
+  window.UI = {
+    esc,
+    revokeObjectUrls,
+    trackUrl,
+    setTheme,
+    setActiveView,
+    showMessage,
+    toast,
+    renderStorageSummary,
+    renderDashboard,
+    fillDeckSelect,
+    renderDeckList,
+    renderMediaDrafts,
+    populateCardEditor,
+    renderManageTable,
+    renderImportSummary,
+    renderBackupSummary,
+    renderReviewScope,
+    renderReviewSetup,
+    renderReviewCard,
+    renderReviewEmpty,
+    renderStats,
+    showConfirm,
+  };
+})();
+
+
+===== README.md =====
+# Offline Flashcards V5
+
+A lightweight offline flashcard web app that runs entirely in the browser by opening `index.html` locally.
+
+## What is new in V5
+
+- dedicated image media store with local offline image support on front and back
+- media reference counting for safer cleanup and fewer full-card scans
+- compound IndexedDB indexes for faster review queue and deck-level due lookups
+- backup / restore now includes decks, cards, review logs, images, and settings
+- fail-closed backup validation for missing decks, cards, logs, or media references
+- safety backup download before restore
+- bulk actions in Manage Cards
+- drag/drop and paste image upload in the card editor
+- review logs remain the source of truth for stats and daily new-card counting
+
+## File tree
+
+- index.html
+- styles.css
+- app.js
+- db.js
+- scheduler.js
+- importer.js
+- stats.js
+- ui.js
+- sample_import.txt
+- sample_import.csv
+
+## How to use
+
+1. Download the bundle and unzip it.
+2. Open `index.html` in a modern browser.
+3. Create a deck or import a TXT / CSV file.
+4. Start review from the Dashboard or Review tab.
+5. Export a backup regularly from Import / Export.
+
+## Import formats
+
+### TXT
+One card per line:
+
+`front;back`
+
+Quoted fields are supported so semicolons can appear inside a card.
+
+### CSV
+Header row required:
+
+`front,back,deck,tags`
+
+- `front` and `back` are required
+- `deck` is optional
+- `tags` is optional and comma-separated inside the cell
+
+## Backup behavior
+
+Export creates one JSON file containing:
+- decks
+- cards
+- review logs
+- media/images
+- settings/meta
+
+Restore behavior:
+- validates structure before replacing anything
+- validates deck references, card references, log references, and image references
+- reconstructs image blobs from the backup
+- downloads a safety backup before restore
+- replaces data atomically
+
+## Known limitations
+
+- search still uses cursor filtering for contains-match text search; it is fine for a few thousand cards but is not a full text-search engine
+- no sync or accounts
+- no audio/video/media other than images
+- no .apkg import
+- image-heavy backups can become large
+
+## Manual regression checklist
+
+### Review flow
+- start review for all decks and for a single deck
+- verify order: learning/relearning first, then new, then review
+- verify rating previews match the actual next due time
+- verify Show Answer, rating buttons, keyboard shortcuts, and progress bar all work
+
+### Undo
+- rate a card once, undo it, and confirm the card returns exactly to its prior state
+- change review scope and confirm undo no longer crosses scopes
+
+### Daily new-card limit
+- set a small daily limit in Settings
+- confirm due learning/relearning and review cards still appear
+- confirm extra new cards are hidden and reported in the UI
+
+### Manage Cards
+- add a card manually
+- edit a card
+- suspend and unsuspend a card
+- run bulk move, bulk suspend, bulk reset scheduling, and bulk delete
+
+### Image upload / display / removal
+- upload front and back images
+- drag and drop an image into the editor
+- paste an image from the clipboard into the editor
+- save the card and confirm images display in Review
+- remove an image before save and confirm it disappears
+
+### Orphan media cleanup
+- upload images, cancel/reset without saving, then run cleanup
+- delete a card with images and confirm unused media is removed
+
+### Import
+- import TXT into an existing deck
+- import CSV with deck and tags columns
+- confirm invalid rows are skipped and duplicates are reported cleanly
+
+### Backup / restore
+- export a backup, wipe data, restore backup, and confirm cards, logs, images, and settings return
+- try a malformed backup and confirm restore fails without touching existing data
+
+### Persistence
+- close the browser tab and reopen `index.html`
+- confirm decks, cards, review state, settings, and images remain available
+
+
+===== sample_import.txt =====
+What does ECG stand for?;Electrocardiogram.
+Which chamber pumps blood into the aorta?;The left ventricle.
+What is ATP?;Adenosine triphosphate.
+
+
+===== sample_import.csv =====
+front,back,deck,tags
+"What valve separates the right atrium and right ventricle?","The tricuspid valve.",Cardiology,"heart,anatomy"
+"What is mitosis?","Cell division that produces two genetically identical daughter cells.",Biology,"cell,division"
+"Which vessel carries deoxygenated blood away from the heart?","The pulmonary artery.",Cardiology,"heart,flow"
+
+

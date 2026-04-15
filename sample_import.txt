@@ -1,0 +1,3 @@
+What does ECG stand for?;Electrocardiogram.
+Which chamber pumps blood into the aorta?;The left ventricle.
+What is ATP?;Adenosine triphosphate.

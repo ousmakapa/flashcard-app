@@ -166,9 +166,9 @@
             <div class="panel-head compact-gap">
               <div>
                 <div class="eyebrow">Nothing due right now</div>
-                <h3 id="review-empty-title">You're caught up.</h3>
+                <h3 id="review-empty-title">You're caught up!</h3>
               </div>
-              <p class="panel-copy" id="review-empty-subtitle">The next card will appear automatically when it becomes due.</p>
+              <p class="panel-copy" id="review-empty-subtitle">Great work! The next card will appear automatically when it becomes due.</p>
             </div>
             <div class="empty-grid">
               <div class="empty-stat">
@@ -457,7 +457,13 @@
             </div>
           </div>
           <div class=”stack-form”>
-            <label>PDF file<input id=”pdf-file” type=”file” accept=”.pdf,application/pdf” /></label>
+            <div class=”file-pick-wrap”>
+              <label class=”file-pick-label” for=”pdf-file”>
+                <svg xmlns=”http://www.w3.org/2000/svg” width=”20” height=”20” viewBox=”0 0 24 24” fill=”none” stroke=”currentColor” stroke-width=”2” stroke-linecap=”round” stroke-linejoin=”round”><path d=”M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4”/><polyline points=”17 8 12 3 7 8”/><line x1=”12” y1=”3” x2=”12” y2=”15”/></svg>
+                <span id=”pdf-file-label-text”>Choose PDF file</span>
+              </label>
+              <input id=”pdf-file” type=”file” accept=”.pdf,application/pdf” />
+            </div>
             <label>Target deck<select id=”pdf-deck-select”></select></label>
             <label>Or create a new deck<input id=”pdf-new-deck-name” type=”text” maxlength=”120” placeholder=”Optional — new deck name” /></label>
             <button id=”pdf-generate-btn” class=”btn btn-primary”>Generate flashcards</button>

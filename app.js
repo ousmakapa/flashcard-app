@@ -153,6 +153,17 @@
       });
 
       document.getElementById('pdf-generate-btn').addEventListener('click', () => this.handlePdfImport());
+      document.getElementById('pdf-file').addEventListener('change', (e) => {
+        const label = document.getElementById('pdf-file-label-text');
+        const wrap = document.querySelector('.file-pick-label');
+        if (e.target.files[0]) {
+          label.textContent = e.target.files[0].name;
+          wrap.classList.add('has-file');
+        } else {
+          label.textContent = 'Choose PDF file';
+          wrap.classList.remove('has-file');
+        }
+      });
       document.getElementById('pdf-import-btn').addEventListener('click', () => this.handlePdfConfirmImport());
       document.getElementById('pdf-discard-btn').addEventListener('click', () => this.handlePdfDiscard());
       document.getElementById('pdf-check-all').addEventListener('change', (e) => this.pdfToggleAll(e.target.checked));
@@ -663,8 +674,10 @@
     async launchReviewForScope(scope) {
       window.UI.setActiveView('study');
       this.state.currentView = 'study';
+      this.clearUndo();
+      this.clearReviewAutoRefresh();
       document.getElementById('review-scope-select').value = scope || 'all';
-      this.prepareReviewSetup();
+      await this.startReview();
     },
 
     async startReview() {
@@ -840,12 +853,27 @@
       this.state.reviewSession.mode = 'empty';
       this.state.reviewSession.hiddenNewCount = snapshot.hiddenNewCount;
       this.state.reviewSession.nextDueAt = snapshot.nextDueAt;
+      const noCards = (this.state.storage?.cardCount || 0) === 0;
+      const hiddenNew = snapshot.hiddenNewCount || 0;
+      const eyebrow = noCards ? 'No cards in library' : 'Nothing due right now';
+      const title = noCards ? 'No cards yet.' : "You're caught up!";
+      let subtitle;
+      if (noCards) {
+        subtitle = 'Go to Import → PDF section to generate your first flashcards with AI.';
+      } else if (hiddenNew > 0) {
+        subtitle = `${hiddenNew} new card${hiddenNew === 1 ? '' : 's'} are waiting but hidden to keep today's session at your daily limit. Raise "New cards per day" in Settings to see more.`;
+      } else {
+        subtitle = snapshot.nextDueAt
+          ? 'Great work! The next card will appear automatically when it becomes due.'
+          : 'All done. Add more cards in Import to keep the queue going.';
+      }
       window.UI.renderReviewEmpty({
-        nextDueRelative: window.Stats.formatRelativeFuture(snapshot.nextDueAt),
-        nextDueExact: window.Stats.formatDateTime(snapshot.nextDueAt),
+        nextDueRelative: noCards ? '—' : window.Stats.formatRelativeFuture(snapshot.nextDueAt),
+        nextDueExact: noCards ? '—' : window.Stats.formatDateTime(snapshot.nextDueAt),
         hiddenNewCount: snapshot.hiddenNewCount,
-        title: "You're caught up.",
-        subtitle: 'The next card will appear here automatically when it becomes due.',
+        eyebrow,
+        title,
+        subtitle,
       });
       this.clearReviewAutoRefresh();
       this.state.reviewRefreshTimer = window.setTimeout(() => {
@@ -1262,6 +1290,8 @@
       document.getElementById('pdf-preview-wrap').classList.add('hidden');
       document.getElementById('pdf-status').classList.add('hidden');
       document.getElementById('pdf-file').value = '';
+      document.getElementById('pdf-file-label-text').textContent = 'Choose PDF file';
+      document.querySelector('.file-pick-label').classList.remove('has-file');
       document.getElementById('pdf-new-deck-name').value = '';
     },
 

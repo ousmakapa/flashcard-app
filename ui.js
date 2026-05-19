@@ -414,11 +414,13 @@
     if (setup) setup.classList.add('hidden');
     if (panel) panel.classList.add('hidden');
     if (empty) empty.classList.remove('hidden');
+    const eyebrowEl = empty ? empty.querySelector('.eyebrow') : null;
+    if (eyebrowEl) eyebrowEl.textContent = state.eyebrow || 'Nothing due right now';
     document.getElementById('review-next-due-relative').textContent = state.nextDueRelative || '--';
     document.getElementById('review-next-due-exact').textContent = state.nextDueExact || '--';
     document.getElementById('review-hidden-new-count').textContent = state.hiddenNewCount || 0;
-    document.getElementById('review-empty-title').textContent = state.title || "You're caught up.";
-    document.getElementById('review-empty-subtitle').textContent = state.subtitle || 'The next card will appear here automatically when it becomes due.';
+    document.getElementById('review-empty-title').textContent = state.title || "You're caught up!";
+    document.getElementById('review-empty-subtitle').textContent = state.subtitle || 'Great work! The next card will appear automatically when it becomes due.';
   }
 
   function renderStudyHome() {

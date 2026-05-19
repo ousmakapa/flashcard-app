@@ -1418,50 +1418,29 @@
     },
 
     async wipeData() {
-      const confirmed = await window.UI.showConfirm({
-        eyebrow: 'Delete everything',
-        title: 'Remove all local data?',
-        copy: 'This deletes decks, cards, images, review logs, settings, and API key from this browser. The page will reload.',
-        confirmLabel: 'Delete everything',
-      });
-      if (!confirmed.confirmed) return;
-      try {
-        await window.DB.wipeAll();
-        ['openai_api_key', 'ankur_onboarded'].forEach((k) => localStorage.removeItem(k));
-        window.location.reload();
-      } catch (error) {
-        window.UI.toast(error.message || 'Could not delete data.', 'error');
-      }
+      if (!window.confirm('Delete all local data?\n\nThis removes decks, cards, images, review logs, settings, and API key from this browser. The page will reload.')) return;
+      try { await window.DB.wipeAll(); } catch (_) {}
+      try { ['openai_api_key', 'ankur_onboarded'].forEach((k) => localStorage.removeItem(k)); } catch (_) {}
+      window.location.reload();
     },
 
     async resetSiteData() {
-      const confirmed = await window.UI.showConfirm({
-        eyebrow: 'Reset site data',
-        title: 'Clear all data for this app?',
-        copy: 'This removes your cards, decks, settings, API key, and cached files — only for this app. No other Chrome data is affected. The page will reload.',
-        confirmLabel: 'Clear site data',
-      });
-      if (!confirmed.confirmed) return;
+      if (!window.confirm('Reset site data?\n\nThis clears your cards, decks, settings, API key, and cached app files. The page will reload with a fresh copy of the app.')) return;
+      try { await window.DB.wipeAll(); } catch (_) {}
+      try { ['openai_api_key', 'ankur_onboarded'].forEach((k) => localStorage.removeItem(k)); } catch (_) {}
       try {
-        // 1. Wipe IndexedDB
-        await window.DB.wipeAll();
-        // 2. Clear all localStorage keys belonging to this app
-        ['openai_api_key', 'ankur_onboarded'].forEach((k) => localStorage.removeItem(k));
-        // 3. Unregister service workers
         if ('serviceWorker' in navigator) {
           const regs = await navigator.serviceWorker.getRegistrations();
           await Promise.all(regs.map((r) => r.unregister()));
         }
-        // 4. Clear all cache storage
+      } catch (_) {}
+      try {
         if ('caches' in window) {
           const keys = await caches.keys();
           await Promise.all(keys.map((k) => caches.delete(k)));
         }
-        // 5. Reload fresh
-        window.location.reload();
-      } catch (error) {
-        window.UI.toast(error.message || 'Could not reset site data.', 'error');
-      }
+      } catch (_) {}
+      window.location.reload();
     },
 
     wrapAsCloze() {

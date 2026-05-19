@@ -690,6 +690,152 @@ code {
   .media-grid-large { grid-template-columns: 1fr; }
 }
 
+/* ── Onboarding tutorial ────────────────────────────── */
+.onboarding-dialog {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+}
+.onboarding-dialog::backdrop { background: rgba(15, 23, 42, 0.6); }
+.onboarding-card {
+  position: relative;
+  width: min(480px, calc(100vw - 32px));
+  background: var(--surface);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  padding: 36px 32px 28px;
+  overflow: hidden;
+}
+.onboarding-close {
+  position: absolute;
+  top: 14px; right: 16px;
+  background: var(--surface-muted);
+  border: 0;
+  border-radius: 50%;
+  width: 32px; height: 32px;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text-soft);
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
+}
+.onboarding-close:hover { background: var(--surface-strong); }
+.onboarding-step { display: none; min-height: 230px; }
+.onboarding-step.active { display: block; }
+.onboarding-icon {
+  font-size: 48px;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+.onboarding-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0 0 10px;
+  color: var(--text);
+}
+.onboarding-body {
+  font-size: 0.97rem;
+  color: var(--text-soft);
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+.onboarding-tip {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.onboarding-ratings { display: grid; gap: 8px; margin-top: 4px; }
+.onboarding-rating-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: var(--text-soft);
+}
+.rating-chip {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  min-width: 56px;
+  text-align: center;
+}
+.rating-chip.again { background: #fee2e2; color: #991b1b; }
+.rating-chip.hard  { background: #fef3c7; color: #92400e; }
+.rating-chip.good  { background: #dbeafe; color: #1e40af; }
+.rating-chip.easy  { background: #d1fae5; color: #065f46; }
+body.dark-theme .rating-chip.again { background: rgba(248,113,113,.2); color: #fca5a5; }
+body.dark-theme .rating-chip.hard  { background: rgba(251,191,36,.15); color: #fcd34d; }
+body.dark-theme .rating-chip.good  { background: rgba(96,165,250,.15); color: #93c5fd; }
+body.dark-theme .rating-chip.easy  { background: rgba(52,211,153,.18); color: #6ee7b7; }
+.onboarding-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 28px;
+  gap: 12px;
+}
+.onboarding-dots {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+.onboarding-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  transition: background .2s, transform .2s;
+}
+.onboarding-dot.active {
+  background: var(--primary);
+  transform: scale(1.3);
+}
+.onboarding-nav { display: flex; gap: 10px; }
+
+/* ── Get-started empty dashboard ────────────────────── */
+.get-started-panel {
+  background: var(--surface);
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 36px 28px;
+  text-align: center;
+  margin-top: 4px;
+}
+.get-started-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 24px 0;
+}
+.get-started-step {
+  background: var(--surface-muted);
+  border-radius: var(--radius-md);
+  padding: 18px 12px;
+}
+.get-started-step-num {
+  width: 32px; height: 32px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 10px;
+}
+.get-started-step h4 { margin: 0 0 4px; font-size: 0.9rem; }
+.get-started-step p  { margin: 0; font-size: 0.82rem; color: var(--text-soft); }
+@media (max-width: 600px) {
+  .get-started-steps { grid-template-columns: 1fr; }
+  .onboarding-card { padding: 28px 20px 22px; }
+}
+
 /* ── PDF AI import ──────────────────────────────────── */
 .difficulty-pill {
   display: inline-block;

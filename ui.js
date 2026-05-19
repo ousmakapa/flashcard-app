@@ -102,7 +102,30 @@
 
     const deckRoot = document.getElementById('dashboard-deck-grid');
     if (!snapshot.perDeck.length) {
-      deckRoot.innerHTML = '<div class="empty-box">No decks yet. Create one in Decks or import a file.</div>';
+      deckRoot.innerHTML = `
+        <div class="get-started-panel">
+          <div class="onboarding-icon">&#x1F393;</div>
+          <h3 style="margin:0 0 6px">Welcome to Ankur!</h3>
+          <p style="color:var(--text-soft);margin:0 0 4px">You have no cards yet. Here's how to get started:</p>
+          <div class="get-started-steps">
+            <div class="get-started-step">
+              <div class="get-started-step-num">1</div>
+              <h4>Import a PDF</h4>
+              <p>Go to Import → use AI to generate cards from your lecture PDFs</p>
+            </div>
+            <div class="get-started-step">
+              <div class="get-started-step-num">2</div>
+              <h4>Study daily</h4>
+              <p>Tap Study now and rate each card — the app schedules reviews for you</p>
+            </div>
+            <div class="get-started-step">
+              <div class="get-started-step-num">3</div>
+              <h4>Track progress</h4>
+              <p>Watch your mastery grow in the Stats tab</p>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="document.querySelector('[data-view=import]').click()">Go to Import</button>
+        </div>`;
       return;
     }
     deckRoot.innerHTML = snapshot.perDeck.map((deck) => `

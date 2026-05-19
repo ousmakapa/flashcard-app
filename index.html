@@ -24,6 +24,7 @@
         <span class="brand-name">Ankur</span>
       </div>
       <div class="header-actions">
+        <button id="help-btn" class="btn btn-ghost btn-sm" title="How to use Ankur">?</button>
         <button id="quick-refresh" class="btn btn-ghost btn-sm">Refresh</button>
         <button id="quick-review-all" class="btn btn-primary btn-sm">Study now</button>
       </div>
@@ -595,6 +596,66 @@
       </section>
     </main>
   </div>
+
+  <!-- Onboarding tutorial -->
+  <dialog id="onboarding-dialog" class="onboarding-dialog">
+    <div class="onboarding-card">
+      <button id="onboarding-close" class="onboarding-close" aria-label="Close">&times;</button>
+
+      <!-- Step 1 -->
+      <div class="onboarding-step active" data-step="1">
+        <div class="onboarding-icon">&#x1F393;</div>
+        <h2 class="onboarding-title">Welcome to Ankur</h2>
+        <p class="onboarding-body">Your personal spaced-repetition flashcard app. Everything stays <strong>private on your device</strong> — no account, no cloud, no cost.</p>
+        <div class="onboarding-tip">Tip: Add this page to your iPad Home Screen for offline access.</div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="onboarding-step" data-step="2">
+        <div class="onboarding-icon">&#x1F4C4;</div>
+        <h2 class="onboarding-title">Import your PDFs</h2>
+        <p class="onboarding-body">Go to <strong>Import</strong> → scroll down to <em>Import from PDF</em>. OpenAI reads your PDF and generates <strong>Easy, Medium, and Hard</strong> cards automatically.</p>
+        <div class="onboarding-tip">You need a free OpenAI API key — add it once in Settings.</div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="onboarding-step" data-step="3">
+        <div class="onboarding-icon">&#x1F9E0;</div>
+        <h2 class="onboarding-title">Study every day</h2>
+        <p class="onboarding-body">Tap <strong>Study now</strong> to review your due cards. The app shows each card's front — try to recall the answer, then reveal it.</p>
+        <div class="onboarding-tip">Even 10 minutes a day beats hours of cramming the night before.</div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="onboarding-step" data-step="4">
+        <div class="onboarding-icon">&#x1F3AF;</div>
+        <h2 class="onboarding-title">Rate each card</h2>
+        <p class="onboarding-body">After revealing the answer, rate yourself honestly:</p>
+        <div class="onboarding-ratings">
+          <div class="onboarding-rating-row"><span class="rating-chip again">Again</span><span>I had no idea — show me soon</span></div>
+          <div class="onboarding-rating-row"><span class="rating-chip hard">Hard</span><span>I got it but it was difficult</span></div>
+          <div class="onboarding-rating-row"><span class="rating-chip good">Good</span><span>I got it with some effort</span></div>
+          <div class="onboarding-rating-row"><span class="rating-chip easy">Easy</span><span>Too easy — push it far out</span></div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="onboarding-step" data-step="5">
+        <div class="onboarding-icon">&#x2705;</div>
+        <h2 class="onboarding-title">You're all set!</h2>
+        <p class="onboarding-body">Start by importing a PDF deck. The app does the rest — scheduling cards at exactly the right time so you never forget.</p>
+        <div class="onboarding-tip">Press <strong>?</strong> in the top bar anytime to reopen this guide.</div>
+      </div>
+
+      <div class="onboarding-footer">
+        <div class="onboarding-dots" id="onboarding-dots"></div>
+        <div class="onboarding-nav">
+          <button id="onboarding-prev" class="btn btn-secondary" style="visibility:hidden">Back</button>
+          <button id="onboarding-next" class="btn btn-primary">Next</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
 
   <dialog id="confirm-dialog" class="confirm-dialog">
     <form method="dialog" class="confirm-card">

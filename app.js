@@ -56,6 +56,7 @@
       cardEditorMedia: { front: [], back: [] },
       pdfCards: [],
       pdfFilter: 'all',
+      onboardingStep: 1,
     },
 
     async init() {
@@ -66,6 +67,7 @@
         await this.refreshBaseData();
         await this.switchView('study');
         window.UI.showMessage('Ankur is ready. Everything stays local to this browser.', 'success');
+        if (!localStorage.getItem('ankur_onboarded')) this.showOnboarding();
       } catch (error) {
         console.error(error);
         window.UI.showMessage(error.message || 'Failed to initialize the app.', 'error');
@@ -141,6 +143,11 @@
       document.getElementById('import-form').addEventListener('submit', (event) => this.handleImport(event));
       document.getElementById('export-backup-btn').addEventListener('click', () => this.handleExportBackup());
       document.getElementById('import-backup-btn').addEventListener('click', () => this.handleRestoreBackup());
+
+      document.getElementById('help-btn').addEventListener('click', () => this.showOnboarding());
+      document.getElementById('onboarding-close').addEventListener('click', () => this.closeOnboarding());
+      document.getElementById('onboarding-next').addEventListener('click', () => this.onboardingNext());
+      document.getElementById('onboarding-prev').addEventListener('click', () => this.onboardingPrev());
 
       document.getElementById('pdf-generate-btn').addEventListener('click', () => this.handlePdfImport());
       document.getElementById('pdf-import-btn').addEventListener('click', () => this.handlePdfConfirmImport());
@@ -1030,6 +1037,50 @@
       this.state.manageState.editingCardId = null;
       this.state.cardEditorMedia = { front: [], back: [] };
       window.UI.revokeObjectUrls();
+    },
+
+    showOnboarding() {
+      this.state.onboardingStep = 1;
+      this._renderOnboardingStep();
+      document.getElementById('onboarding-dialog').showModal();
+    },
+
+    closeOnboarding() {
+      localStorage.setItem('ankur_onboarded', '1');
+      document.getElementById('onboarding-dialog').close();
+    },
+
+    onboardingNext() {
+      const total = 5;
+      if (this.state.onboardingStep < total) {
+        this.state.onboardingStep += 1;
+        this._renderOnboardingStep();
+      } else {
+        this.closeOnboarding();
+      }
+    },
+
+    onboardingPrev() {
+      if (this.state.onboardingStep > 1) {
+        this.state.onboardingStep -= 1;
+        this._renderOnboardingStep();
+      }
+    },
+
+    _renderOnboardingStep() {
+      const step = this.state.onboardingStep;
+      const total = 5;
+      document.querySelectorAll('.onboarding-step').forEach((el) => {
+        el.classList.toggle('active', Number(el.dataset.step) === step);
+      });
+      const dotsEl = document.getElementById('onboarding-dots');
+      dotsEl.innerHTML = Array.from({ length: total }, (_, i) =>
+        `<div class="onboarding-dot${i + 1 === step ? ' active' : ''}"></div>`
+      ).join('');
+      const prevBtn = document.getElementById('onboarding-prev');
+      const nextBtn = document.getElementById('onboarding-next');
+      prevBtn.style.visibility = step === 1 ? 'hidden' : 'visible';
+      nextBtn.textContent = step === total ? 'Get started' : 'Next';
     },
 
     async handlePdfImport() {

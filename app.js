@@ -66,7 +66,13 @@
         await this.loadSettings();
         await this.refreshBaseData();
         await this.switchView('study');
-        window.UI.showMessage('Ankur is ready. Everything stays local to this browser.', 'success');
+        const pendingMsg = localStorage.getItem('ankur_post_msg');
+        if (pendingMsg) {
+          localStorage.removeItem('ankur_post_msg');
+          try { const m = JSON.parse(pendingMsg); window.UI.toast(m.text, m.type); } catch (_) {}
+        } else {
+          window.UI.showMessage('Ankur is ready. Everything stays local to this browser.', 'success');
+        }
         if (!localStorage.getItem('ankur_onboarded')) this.showOnboarding();
       } catch (error) {
         console.error(error);
@@ -1421,6 +1427,7 @@
       if (!window.confirm('Delete all local data?\n\nThis removes decks, cards, images, review logs, settings, and API key from this browser. The page will reload.')) return;
       try { await window.DB.wipeAll(); } catch (_) {}
       try { ['openai_api_key', 'ankur_onboarded'].forEach((k) => localStorage.removeItem(k)); } catch (_) {}
+      localStorage.setItem('ankur_post_msg', JSON.stringify({ text: 'All local data deleted.', type: 'success' }));
       window.location.reload();
     },
 
@@ -1440,6 +1447,7 @@
           await Promise.all(keys.map((k) => caches.delete(k)));
         }
       } catch (_) {}
+      localStorage.setItem('ankur_post_msg', JSON.stringify({ text: 'Site data reset. App reloaded fresh.', type: 'success' }));
       window.location.reload();
     },
 

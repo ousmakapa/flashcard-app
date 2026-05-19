@@ -2,7 +2,7 @@
 // Caches all app shell files on install so the app works fully offline.
 // Uses a cache-first strategy: serve from cache, fall back to network.
 
-const CACHE_NAME = 'ankur-v5-shell-r7';
+const CACHE_NAME = 'ankur-v5-shell-r8';
 
 const SHELL_FILES = [
   './',
@@ -15,6 +15,7 @@ const SHELL_FILES = [
   './stats.js',
   './ui.js',
   './app.js',
+  './pdf_importer.js',
   './manifest.json',
   './icon.svg',
   './icon-192.png',

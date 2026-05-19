@@ -165,6 +165,7 @@
       document.getElementById('cleanup-orphan-media-btn').addEventListener('click', () => this.cleanupOrphanMedia());
       document.getElementById('clear-review-logs-btn').addEventListener('click', () => this.clearReviewLogs());
       document.getElementById('wipe-data-btn').addEventListener('click', () => this.wipeData());
+      document.getElementById('reset-site-data-btn').addEventListener('click', () => this.resetSiteData());
 
       document.addEventListener('keydown', (event) => this.handleGlobalKeys(event));
     },
@@ -1363,6 +1364,36 @@
         window.UI.toast('All data removed.', 'success');
       } catch (error) {
         window.UI.toast(error.message || 'Could not delete data.', 'error');
+      }
+    },
+
+    async resetSiteData() {
+      const confirmed = await window.UI.showConfirm({
+        eyebrow: 'Reset site data',
+        title: 'Clear all data for this app?',
+        copy: 'This removes your cards, decks, settings, API key, and cached files — only for this app. No other Chrome data is affected. The page will reload.',
+        confirmLabel: 'Clear site data',
+      });
+      if (!confirmed.confirmed) return;
+      try {
+        // 1. Wipe IndexedDB
+        await window.DB.wipeAll();
+        // 2. Clear all localStorage keys belonging to this app
+        ['openai_api_key', 'ankur_onboarded'].forEach((k) => localStorage.removeItem(k));
+        // 3. Unregister service workers
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map((r) => r.unregister()));
+        }
+        // 4. Clear all cache storage
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
+        }
+        // 5. Reload fresh
+        window.location.reload();
+      } catch (error) {
+        window.UI.toast(error.message || 'Could not reset site data.', 'error');
       }
     },
 

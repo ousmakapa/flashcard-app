@@ -165,7 +165,7 @@
   }
 
   async function detectImportDuplicates(rows, defaultDeckId) {
-    const existingCards = await window.DB.listCards();
+    const existingCards = await window.DB.listCardKeys();
     const existingKeys = new Set(existingCards.map((card) => duplicateKey(card.deckId, card.question, card.answer)));
     const seenInFile = new Set();
     const accepted = [];

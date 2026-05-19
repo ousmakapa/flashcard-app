@@ -503,6 +503,23 @@
     return (cards || []).map(normalizeCardForRead).filter(Boolean);
   }
 
+  async function listCardKeys() {
+    return tx(['cards'], 'readonly', async ({ cards }) => {
+      return new Promise((resolve, reject) => {
+        const keys = [];
+        const req = cards.openCursor();
+        req.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (!cursor) { resolve(keys); return; }
+          const r = cursor.value;
+          keys.push({ deckId: r.deckId || '', question: r.question || '', answer: r.answer || '' });
+          cursor.continue();
+        };
+        req.onerror = () => reject(req.error);
+      });
+    });
+  }
+
   async function getCard(cardId) {
     if (!cardId) return null;
     const card = await tx(['cards'], 'readonly', async ({ cards }) => reqToPromise(cards.get(cardId)));
@@ -580,25 +597,33 @@
 
   async function bulkCreateCards(cardInputs) {
     const cards = (cardInputs || []).map((item) => prepareCardForWrite(item));
-    return tx(['decks', 'cards', 'media'], 'readwrite', async ({ decks, cards: cardsStore, media }) => {
-      const deckCache = new Map();
-      for (const card of cards) {
-        if (!deckCache.has(card.deckId)) {
-          deckCache.set(card.deckId, normalizeDeckForRead(await reqToPromise(decks.get(card.deckId))));
+    const CHUNK = 300;
+    let total = 0;
+    for (let i = 0; i < cards.length; i += CHUNK) {
+      const chunk = cards.slice(i, i + CHUNK);
+      await tx(['decks', 'cards', 'media'], 'readwrite', async ({ decks, cards: cardsStore, media }) => {
+        const deckCache = new Map();
+        for (const card of chunk) {
+          if (!deckCache.has(card.deckId)) {
+            deckCache.set(card.deckId, normalizeDeckForRead(await reqToPromise(decks.get(card.deckId))));
+          }
+          if (!deckCache.get(card.deckId)) throw new Error(`Selected deck does not exist: ${card.deckId}`);
+          await validateImageRefsExist(media, [...card.frontImageIds, ...card.backImageIds]);
         }
-        if (!deckCache.get(card.deckId)) throw new Error(`Selected deck does not exist: ${card.deckId}`);
-        await validateImageRefsExist(media, [...card.frontImageIds, ...card.backImageIds]);
-      }
-      const diff = new Map();
-      cards.forEach((card) => {
-        cardsStore.put(card);
-        uniqueIdList([...(card.frontImageIds || []), ...(card.backImageIds || [])]).forEach((mediaId) => {
-          diff.set(mediaId, (diff.get(mediaId) || 0) + 1);
+        const diff = new Map();
+        chunk.forEach((card) => {
+          cardsStore.put(card);
+          uniqueIdList([...(card.frontImageIds || []), ...(card.backImageIds || [])]).forEach((mediaId) => {
+            diff.set(mediaId, (diff.get(mediaId) || 0) + 1);
+          });
         });
+        await applyMediaRefDiff(media, diff);
       });
-      await applyMediaRefDiff(media, diff);
-      return cards.length;
-    });
+      total += chunk.length;
+      // yield to browser between chunks so UI stays responsive
+      await new Promise((r) => setTimeout(r, 0));
+    }
+    return total;
   }
 
   async function createCard(cardInput) {
@@ -1186,6 +1211,7 @@
     renameDeck,
     deleteDeck,
     listCards,
+    listCardKeys,
     getCard,
     getCardsByIds,
     getCardsByDeck,

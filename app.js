@@ -148,6 +148,9 @@
       document.getElementById('onboarding-close').addEventListener('click', () => this.closeOnboarding());
       document.getElementById('onboarding-next').addEventListener('click', () => this.onboardingNext());
       document.getElementById('onboarding-prev').addEventListener('click', () => this.onboardingPrev());
+      document.getElementById('onboarding-dialog').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) this.closeOnboarding();
+      });
 
       document.getElementById('pdf-generate-btn').addEventListener('click', () => this.handlePdfImport());
       document.getElementById('pdf-import-btn').addEventListener('click', () => this.handlePdfConfirmImport());
@@ -174,6 +177,7 @@
       this.state.settings.theme = theme === 'dark' ? 'dark' : 'light';
       this.state.settings.newCardsPerDay = Math.max(0, Number(newCardsPerDay || 20));
       window.UI.setTheme(this.state.settings.theme);
+      document.getElementById('theme-select').value = this.state.settings.theme;
       document.getElementById('new-cards-per-day').value = this.state.settings.newCardsPerDay;
       const savedKey = localStorage.getItem('openai_api_key') || '';
       if (savedKey) document.getElementById('openai-api-key').value = savedKey;
@@ -1087,6 +1091,10 @@
       const fileInput = document.getElementById('pdf-file');
       const file = fileInput.files[0];
       if (!file) return window.UI.toast('Choose a PDF file first.', 'error');
+      if (!file.name.toLowerCase().endsWith('.pdf')) return window.UI.toast('Please choose a .pdf file.', 'error');
+      if (file.size > 50 * 1024 * 1024) return window.UI.toast('PDF is too large (max 50 MB). Try a smaller file.', 'error');
+
+      if (!window.PdfImporter) return window.UI.toast('PDF importer failed to load. Check your internet connection and refresh.', 'error');
 
       const apiKey = localStorage.getItem('openai_api_key') || '';
       if (!apiKey) return window.UI.toast('Add your OpenAI API key in Settings first.', 'error');
@@ -1121,6 +1129,7 @@
         this.state.pdfCards = cards.map((c, i) => ({ ...c, _id: i, deckId }));
         this.state.pdfFilter = 'all';
         statusEl.textContent = `Done — ${cards.length} cards generated. Review below, then click Add.`;
+        document.getElementById('pdf-new-deck-name').value = '';
         this.renderPdfPreview();
         previewWrap.classList.remove('hidden');
       } catch (err) {
@@ -1175,7 +1184,7 @@
       const hard = cards.filter((c) => c.difficulty === 'hard').length;
       document.getElementById('pdf-preview-count').textContent =
         `${cards.length} cards — Easy: ${easy}  Medium: ${medium}  Hard: ${hard}`;
-      document.getElementById('pdf-check-all').checked = visible.every((c) => !c._excluded);
+      document.getElementById('pdf-check-all').checked = visible.length > 0 && visible.every((c) => !c._excluded);
       this.updatePdfCount();
     },
 
@@ -1201,6 +1210,8 @@
     async handlePdfConfirmImport() {
       const toImport = (this.state.pdfCards || []).filter((c) => !c._excluded);
       if (!toImport.length) return window.UI.toast('No cards selected.', 'error');
+      const importBtn = document.getElementById('pdf-import-btn');
+      importBtn.disabled = true;
       try {
         const rows = toImport.map((c) => ({
           deckId: c.deckId,
@@ -1213,20 +1224,29 @@
         if (deduped.accepted.length) await window.DB.bulkCreateCards(deduped.accepted);
         await this.refreshBaseData();
         document.getElementById('pdf-preview-wrap').classList.add('hidden');
-        document.getElementById('pdf-status').textContent =
-          `Imported ${deduped.accepted.length} card${deduped.accepted.length === 1 ? '' : 's'}. Skipped ${deduped.duplicates.length} duplicate${deduped.duplicates.length === 1 ? '' : 's'}.`;
+        const statusEl = document.getElementById('pdf-status');
+        const n = deduped.accepted.length;
+        const d = deduped.duplicates.length;
+        statusEl.textContent = n > 0
+          ? `Imported ${n} card${n === 1 ? '' : 's'}${d > 0 ? `. Skipped ${d} duplicate${d === 1 ? '' : 's'}.` : '.'}`
+          : `All ${d} card${d === 1 ? '' : 's'} already exist in this deck — nothing new to import.`;
         this.state.pdfCards = [];
-        window.UI.toast(`Imported ${deduped.accepted.length} cards.`, 'success');
+        if (n > 0) window.UI.toast(`Imported ${n} cards.`, 'success');
+        else window.UI.toast('All cards were already in the deck.', 'info');
       } catch (err) {
         window.UI.toast(err.message || 'Import failed.', 'error');
+      } finally {
+        importBtn.disabled = false;
       }
     },
 
     handlePdfDiscard() {
       this.state.pdfCards = [];
+      this.state.pdfFilter = 'all';
       document.getElementById('pdf-preview-wrap').classList.add('hidden');
       document.getElementById('pdf-status').classList.add('hidden');
       document.getElementById('pdf-file').value = '';
+      document.getElementById('pdf-new-deck-name').value = '';
     },
 
     async renderStatsView() {

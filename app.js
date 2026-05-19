@@ -1503,4 +1503,12 @@
 
   window.App = App;
   document.addEventListener('DOMContentLoaded', () => App.init());
+
+  // Reload when the service worker sends SW_UPDATED (fallback for browsers
+  // where client.navigate() is not supported, e.g. Safari).
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data?.type === 'SW_UPDATED') window.location.reload();
+    });
+  }
 })();

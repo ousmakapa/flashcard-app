@@ -2,7 +2,7 @@
 // Caches all app shell files on install so the app works fully offline.
 // Uses a cache-first strategy: serve from cache, fall back to network.
 
-const CACHE_NAME = 'ankur-v5-shell-r20';
+const CACHE_NAME = 'ankur-v5-shell-r21';
 
 const SHELL_FILES = [
   './',
@@ -30,11 +30,22 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
-    )
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+      .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({ type: 'window' }))
+      .then((clients) => {
+        clients.forEach((client) => {
+          // navigate() reloads the tab with fresh files; postMessage is the
+          // fallback for browsers that don't support client.navigate().
+          try {
+            client.navigate(client.url);
+          } catch (_) {
+            client.postMessage({ type: 'SW_UPDATED' });
+          }
+        });
+      })
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {

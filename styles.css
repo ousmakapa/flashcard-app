@@ -689,3 +689,46 @@ code {
   .rating-grid { grid-template-columns: 1fr; }
   .media-grid-large { grid-template-columns: 1fr; }
 }
+
+/* ── PDF AI import ──────────────────────────────────── */
+.difficulty-pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.difficulty-easy   { background: #d1fae5; color: #065f46; }
+.difficulty-medium { background: #fef3c7; color: #92400e; }
+.difficulty-hard   { background: #fee2e2; color: #991b1b; }
+body.dark-theme .difficulty-easy   { background: rgba(52,211,153,.18); color: #6ee7b7; }
+body.dark-theme .difficulty-medium { background: rgba(251,191,36,.15); color: #fcd34d; }
+body.dark-theme .difficulty-hard   { background: rgba(248,113,113,.15); color: #fca5a5; }
+
+.pdf-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 1.2rem 0 0.5rem;
+}
+.pdf-filter-btn.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+.pdf-table-shell {
+  max-height: 420px;
+  overflow-y: auto;
+}
+.pdf-cell-text {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+.pdf-action-row { margin-top: 1rem; }

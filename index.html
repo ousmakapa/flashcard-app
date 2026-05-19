@@ -427,6 +427,50 @@
             <div id="backup-summary" class="summary-box muted-box">No backup operation run yet.</div>
           </div>
         </div>
+        <div class=”panel” id=”pdf-import-panel”>
+          <div class=”panel-head”>
+            <div>
+              <div class=”eyebrow”>AI card generation</div>
+              <h3>Import from PDF</h3>
+            </div>
+            <p class=”panel-copy”>Upload a PDF and OpenAI will generate <strong>Easy / Medium / Hard</strong> flashcards. Requires an OpenAI API key saved in Settings.</p>
+          </div>
+          <div class=”stack-form”>
+            <label>PDF file<input id=”pdf-file” type=”file” accept=”.pdf,application/pdf” /></label>
+            <label>Target deck<select id=”pdf-deck-select”></select></label>
+            <label>Or create a new deck<input id=”pdf-new-deck-name” type=”text” maxlength=”120” placeholder=”Optional — new deck name” /></label>
+            <button id=”pdf-generate-btn” class=”btn btn-primary”>Generate flashcards</button>
+          </div>
+          <div id=”pdf-status” class=”summary-box muted-box hidden”></div>
+          <div id=”pdf-preview-wrap” class=”hidden”>
+            <div class=”pdf-preview-header”>
+              <span id=”pdf-preview-count” class=”panel-copy”></span>
+              <div class=”button-row”>
+                <button class=”btn btn-ghost btn-sm pdf-filter-btn active” data-filter=”all”>All</button>
+                <button class=”btn btn-ghost btn-sm pdf-filter-btn” data-filter=”easy”>Easy</button>
+                <button class=”btn btn-ghost btn-sm pdf-filter-btn” data-filter=”medium”>Medium</button>
+                <button class=”btn btn-ghost btn-sm pdf-filter-btn” data-filter=”hard”>Hard</button>
+              </div>
+            </div>
+            <div class=”table-shell pdf-table-shell”>
+              <table class=”data-table”>
+                <thead>
+                  <tr>
+                    <th class=”checkbox-col”><input type=”checkbox” id=”pdf-check-all” checked /></th>
+                    <th>Level</th>
+                    <th>Front</th>
+                    <th>Back</th>
+                  </tr>
+                </thead>
+                <tbody id=”pdf-preview-body”></tbody>
+              </table>
+            </div>
+            <div class=”button-row left-aligned pdf-action-row”>
+              <button id=”pdf-import-btn” class=”btn btn-primary”>Add <span id=”pdf-import-count”>0</span> cards to deck</button>
+              <button id=”pdf-discard-btn” class=”btn btn-ghost”>Discard</button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- â”€â”€ Stats view â”€â”€ -->
@@ -490,6 +534,10 @@
               <label>
                 New cards per day
                 <input id="new-cards-per-day" type="number" min="0" step="1" />
+              </label>
+              <label>
+                OpenAI API key
+                <input id="openai-api-key" type="password" placeholder="sk-..." autocomplete="off" />
               </label>
               <button id="save-settings-btn" class="btn btn-primary">Save settings</button>
             </div>
@@ -569,6 +617,7 @@
   <script src="./apkg_reader.js"></script>
   <script src="./stats.js"></script>
   <script src="./ui.js"></script>
+  <script src="./pdf_importer.js"></script>
   <script src="./app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {

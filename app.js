@@ -54,6 +54,8 @@
         currentItems: [],
       },
       cardEditorMedia: { front: [], back: [] },
+      pdfCards: [],
+      pdfFilter: 'all',
     },
 
     async init() {
@@ -140,6 +142,14 @@
       document.getElementById('export-backup-btn').addEventListener('click', () => this.handleExportBackup());
       document.getElementById('import-backup-btn').addEventListener('click', () => this.handleRestoreBackup());
 
+      document.getElementById('pdf-generate-btn').addEventListener('click', () => this.handlePdfImport());
+      document.getElementById('pdf-import-btn').addEventListener('click', () => this.handlePdfConfirmImport());
+      document.getElementById('pdf-discard-btn').addEventListener('click', () => this.handlePdfDiscard());
+      document.getElementById('pdf-check-all').addEventListener('change', (e) => this.pdfToggleAll(e.target.checked));
+      document.querySelectorAll('.pdf-filter-btn').forEach((btn) => {
+        btn.addEventListener('click', () => this.pdfFilterByDifficulty(btn.dataset.filter));
+      });
+
       document.getElementById('save-settings-btn').addEventListener('click', () => this.saveSettings());
       document.getElementById('seed-sample-data-btn').addEventListener('click', () => this.seedSampleData());
       document.getElementById('cleanup-orphan-media-btn').addEventListener('click', () => this.cleanupOrphanMedia());
@@ -158,6 +168,8 @@
       this.state.settings.newCardsPerDay = Math.max(0, Number(newCardsPerDay || 20));
       window.UI.setTheme(this.state.settings.theme);
       document.getElementById('new-cards-per-day').value = this.state.settings.newCardsPerDay;
+      const savedKey = localStorage.getItem('openai_api_key') || '';
+      if (savedKey) document.getElementById('openai-api-key').value = savedKey;
     },
 
     async refreshBaseData() {
@@ -176,6 +188,7 @@
       window.UI.fillDeckSelect('manage-deck-filter', decks, { includeAll: true, allLabel: 'All decks' });
       window.UI.fillDeckSelect('bulk-move-deck', decks, { includeNone: true, noneLabel: 'Move selected to...' });
       window.UI.fillDeckSelect('import-deck-select', decks, { includeNone: true, noneLabel: 'Choose target deck' });
+      window.UI.fillDeckSelect('pdf-deck-select', decks, { includeNone: true, noneLabel: 'Choose target deck' });
       await this.refreshReviewOverview();
       await this.populateEditorFromCurrentState();
     },
@@ -1019,6 +1032,152 @@
       window.UI.revokeObjectUrls();
     },
 
+    async handlePdfImport() {
+      const fileInput = document.getElementById('pdf-file');
+      const file = fileInput.files[0];
+      if (!file) return window.UI.toast('Choose a PDF file first.', 'error');
+
+      const apiKey = localStorage.getItem('openai_api_key') || '';
+      if (!apiKey) return window.UI.toast('Add your OpenAI API key in Settings first.', 'error');
+
+      const newDeckName = document.getElementById('pdf-new-deck-name').value.trim();
+      let deckId = document.getElementById('pdf-deck-select').value || '';
+      if (newDeckName) {
+        const deck = await window.DB.createDeck(newDeckName);
+        deckId = deck.id;
+        await this.refreshBaseData();
+        document.getElementById('pdf-new-deck-name').value = '';
+      }
+      if (!deckId) return window.UI.toast('Choose or create a target deck.', 'error');
+
+      const statusEl = document.getElementById('pdf-status');
+      const previewWrap = document.getElementById('pdf-preview-wrap');
+      const generateBtn = document.getElementById('pdf-generate-btn');
+
+      statusEl.classList.remove('hidden');
+      statusEl.textContent = 'Starting…';
+      previewWrap.classList.add('hidden');
+      generateBtn.disabled = true;
+
+      try {
+        const cards = await window.PdfImporter.generateFlashcardsFromPdf(file, apiKey, (msg) => {
+          statusEl.textContent = msg;
+        });
+        if (!cards.length) {
+          statusEl.textContent = 'No cards could be generated from this PDF. Try a different file.';
+          return;
+        }
+        this.state.pdfCards = cards.map((c, i) => ({ ...c, _id: i, deckId }));
+        this.state.pdfFilter = 'all';
+        statusEl.textContent = `Done — ${cards.length} cards generated. Review below, then click Add.`;
+        this.renderPdfPreview();
+        previewWrap.classList.remove('hidden');
+      } catch (err) {
+        statusEl.textContent = `Error: ${err.message}`;
+        window.UI.toast(err.message, 'error');
+      } finally {
+        generateBtn.disabled = false;
+      }
+    },
+
+    renderPdfPreview() {
+      const cards = this.state.pdfCards || [];
+      const filter = this.state.pdfFilter || 'all';
+      const visible = filter === 'all' ? cards : cards.filter((c) => c.difficulty === filter);
+
+      // Update filter button active state
+      document.querySelectorAll('.pdf-filter-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.filter === filter);
+      });
+
+      const tbody = document.getElementById('pdf-preview-body');
+      tbody.innerHTML = '';
+      visible.forEach((card) => {
+        const tr = document.createElement('tr');
+        tr.dataset.id = card._id;
+        const td0 = document.createElement('td');
+        td0.className = 'checkbox-col';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'pdf-card-check';
+        cb.dataset.id = card._id;
+        cb.checked = !card._excluded;
+        cb.addEventListener('change', () => { card._excluded = !cb.checked; this.updatePdfCount(); });
+        td0.appendChild(cb);
+        const td1 = document.createElement('td');
+        const badge = document.createElement('span');
+        badge.className = `difficulty-pill difficulty-${card.difficulty}`;
+        badge.textContent = card.difficulty;
+        td1.appendChild(badge);
+        const td2 = document.createElement('td');
+        td2.className = 'pdf-cell-text';
+        td2.textContent = card.question;
+        const td3 = document.createElement('td');
+        td3.className = 'pdf-cell-text';
+        td3.textContent = card.answer;
+        tr.appendChild(td0); tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+        tbody.appendChild(tr);
+      });
+
+      const easy = cards.filter((c) => c.difficulty === 'easy').length;
+      const medium = cards.filter((c) => c.difficulty === 'medium').length;
+      const hard = cards.filter((c) => c.difficulty === 'hard').length;
+      document.getElementById('pdf-preview-count').textContent =
+        `${cards.length} cards — Easy: ${easy}  Medium: ${medium}  Hard: ${hard}`;
+      document.getElementById('pdf-check-all').checked = visible.every((c) => !c._excluded);
+      this.updatePdfCount();
+    },
+
+    pdfToggleAll(checked) {
+      const cards = this.state.pdfCards || [];
+      const filter = this.state.pdfFilter || 'all';
+      const visible = filter === 'all' ? cards : cards.filter((c) => c.difficulty === filter);
+      visible.forEach((c) => { c._excluded = !checked; });
+      document.querySelectorAll('.pdf-card-check').forEach((cb) => { cb.checked = checked; });
+      this.updatePdfCount();
+    },
+
+    pdfFilterByDifficulty(filter) {
+      this.state.pdfFilter = filter;
+      this.renderPdfPreview();
+    },
+
+    updatePdfCount() {
+      const selected = (this.state.pdfCards || []).filter((c) => !c._excluded).length;
+      document.getElementById('pdf-import-count').textContent = selected;
+    },
+
+    async handlePdfConfirmImport() {
+      const toImport = (this.state.pdfCards || []).filter((c) => !c._excluded);
+      if (!toImport.length) return window.UI.toast('No cards selected.', 'error');
+      try {
+        const rows = toImport.map((c) => ({
+          deckId: c.deckId,
+          question: c.question,
+          answer: c.answer,
+          tags: [c.difficulty],
+          cardType: 'basic',
+        }));
+        const deduped = await window.Importer.detectImportDuplicates(rows, rows[0].deckId);
+        if (deduped.accepted.length) await window.DB.bulkCreateCards(deduped.accepted);
+        await this.refreshBaseData();
+        document.getElementById('pdf-preview-wrap').classList.add('hidden');
+        document.getElementById('pdf-status').textContent =
+          `Imported ${deduped.accepted.length} card${deduped.accepted.length === 1 ? '' : 's'}. Skipped ${deduped.duplicates.length} duplicate${deduped.duplicates.length === 1 ? '' : 's'}.`;
+        this.state.pdfCards = [];
+        window.UI.toast(`Imported ${deduped.accepted.length} cards.`, 'success');
+      } catch (err) {
+        window.UI.toast(err.message || 'Import failed.', 'error');
+      }
+    },
+
+    handlePdfDiscard() {
+      this.state.pdfCards = [];
+      document.getElementById('pdf-preview-wrap').classList.add('hidden');
+      document.getElementById('pdf-status').classList.add('hidden');
+      document.getElementById('pdf-file').value = '';
+    },
+
     async renderStatsView() {
       const [cards, decks, logs] = await Promise.all([window.DB.listCards(), window.DB.listDecks(), window.DB.listReviewLogs()]);
       const dailyStats = window.Stats.computeDailyStats(logs);
@@ -1033,6 +1192,9 @@
       try {
         const theme = document.getElementById('theme-select').value === 'dark' ? 'dark' : 'light';
         const newCardsPerDay = Math.max(0, Number(document.getElementById('new-cards-per-day').value || 0));
+        const apiKey = document.getElementById('openai-api-key').value.trim();
+        if (apiKey) localStorage.setItem('openai_api_key', apiKey);
+        else localStorage.removeItem('openai_api_key');
         await Promise.all([
           window.DB.setSetting('theme', theme),
           window.DB.setSetting('newCardsPerDay', newCardsPerDay),

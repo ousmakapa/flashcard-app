@@ -463,13 +463,24 @@
       manageState.search = document.getElementById('manage-search').value.trim();
       manageState.deckFilter = document.getElementById('manage-deck-filter').value;
       manageState.suspendFilter = document.getElementById('manage-suspend-filter').value;
-      const result = await window.DB.searchCards({
+      let result = await window.DB.searchCards({
         query: manageState.search,
         deckId: manageState.deckFilter && manageState.deckFilter !== 'all' ? manageState.deckFilter : '',
         suspendFilter: manageState.suspendFilter,
         page: manageState.page,
         pageSize: manageState.pageSize,
       });
+      // If page is out of bounds (e.g. after deleting the last card on page 2+), reset to page 1
+      if (!result.items.length && manageState.page > 1) {
+        manageState.page = 1;
+        result = await window.DB.searchCards({
+          query: manageState.search,
+          deckId: manageState.deckFilter && manageState.deckFilter !== 'all' ? manageState.deckFilter : '',
+          suspendFilter: manageState.suspendFilter,
+          page: 1,
+          pageSize: manageState.pageSize,
+        });
+      }
       const deckMap = new Map(this.state.decks.map((deck) => [deck.id, deck.name]));
       result.items = result.items.map((item) => ({ ...item, deckName: deckMap.get(item.deckId) || item.deckId }));
       this.state.manageState.currentItems = result.items;

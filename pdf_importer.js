@@ -55,7 +55,7 @@
     return chunks;
   }
 
-  async function callOpenAI(chunk, apiKey) {
+  async function callOpenAI(chunk, apiKey, retrying) {
     const system = `You are a dental and medical education expert creating spaced-repetition flashcards.
 
 Generate three difficulty levels:
@@ -85,6 +85,12 @@ Return ONLY a valid JSON array with no markdown, no explanation, nothing else:
       }),
     });
 
+    // Retry once on rate limit
+    if (res.status === 429 && !retrying) {
+      await new Promise((r) => setTimeout(r, 8000));
+      return callOpenAI(chunk, apiKey, true);
+    }
+
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err?.error?.message || `OpenAI API error: ${res.status}`);
@@ -97,9 +103,11 @@ Return ONLY a valid JSON array with no markdown, no explanation, nothing else:
     try {
       const cards = JSON.parse(match[0]);
       return (cards || []).filter(
-        (c) => c && typeof c.question === 'string' && typeof c.answer === 'string' &&
+        (c) => c &&
+               typeof c.question === 'string' && c.question.trim().length > 0 &&
+               typeof c.answer === 'string' && c.answer.trim().length > 0 &&
                ['easy', 'medium', 'hard'].includes(c.difficulty)
-      );
+      ).map((c) => ({ ...c, question: c.question.trim(), answer: c.answer.trim() }));
     } catch (_) { return []; }
   }
 
@@ -118,11 +126,21 @@ Return ONLY a valid JSON array with no markdown, no explanation, nothing else:
     onProgress(`Extracted ${Math.round(text.length / 1000)}k characters (${chunks.length} chunk${chunks.length === 1 ? '' : 's'}). Calling OpenAI…`);
 
     const all = [];
+    let failedChunks = 0;
     for (let i = 0; i < chunks.length; i++) {
       onProgress(`Generating cards… chunk ${i + 1} / ${chunks.length}  (${all.length} cards so far)`);
-      const cards = await callOpenAI(chunks[i], apiKey.trim());
-      all.push(...cards);
+      try {
+        const cards = await callOpenAI(chunks[i], apiKey.trim());
+        all.push(...cards);
+      } catch (err) {
+        failedChunks += 1;
+        // If every chunk fails, surface the last error
+        if (failedChunks === chunks.length) throw err;
+      }
       if (i < chunks.length - 1) await new Promise((r) => setTimeout(r, 400));
+    }
+    if (failedChunks > 0) {
+      onProgress(`Done — ${all.length} cards generated (${failedChunks} chunk${failedChunks === 1 ? '' : 's'} failed due to API errors).`);
     }
     return all;
   }

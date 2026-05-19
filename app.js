@@ -1363,20 +1363,14 @@
       const confirmed = await window.UI.showConfirm({
         eyebrow: 'Delete everything',
         title: 'Remove all local data?',
-        copy: 'This deletes decks, cards, images, review logs, and settings from this browser.',
+        copy: 'This deletes decks, cards, images, review logs, settings, and API key from this browser. The page will reload.',
         confirmLabel: 'Delete everything',
       });
       if (!confirmed.confirmed) return;
       try {
         await window.DB.wipeAll();
-        await window.DB.ensureDefaultDeck();
-        await window.DB.setSetting('theme', 'light');
-        await window.DB.setSetting('newCardsPerDay', 20);
-        this.resetReviewAndEditorState();
-        await this.loadSettings();
-        await this.refreshBaseData();
-        await this.switchView('study');
-        window.UI.toast('All data removed.', 'success');
+        ['openai_api_key', 'ankur_onboarded'].forEach((k) => localStorage.removeItem(k));
+        window.location.reload();
       } catch (error) {
         window.UI.toast(error.message || 'Could not delete data.', 'error');
       }

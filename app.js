@@ -154,35 +154,35 @@
 
       document.getElementById('pdf-generate-btn').addEventListener('click', () => this.handlePdfImport());
       document.getElementById('pdf-file').addEventListener('change', (e) => {
-        const label = document.getElementById('pdf-file-label-text');
-        const wrap = e.target.closest('.file-pick-wrap').querySelector('.file-pick-label');
+        const labelEl = document.getElementById('pdf-file-label-text');
+        const wrap = e.target.closest('.file-pick-label');
         if (e.target.files[0]) {
-          label.textContent = e.target.files[0].name;
+          labelEl.textContent = e.target.files[0].name;
           wrap.classList.add('has-file');
         } else {
-          label.textContent = 'Choose PDF file';
+          labelEl.textContent = 'Choose PDF file';
           wrap.classList.remove('has-file');
         }
       });
       document.getElementById('import-file').addEventListener('change', (e) => {
-        const label = document.getElementById('import-file-label-text');
-        const wrap = e.target.closest('.file-pick-wrap').querySelector('.file-pick-label');
+        const labelEl = document.getElementById('import-file-label-text');
+        const wrap = e.target.closest('.file-pick-label');
         if (e.target.files[0]) {
-          label.textContent = e.target.files[0].name;
+          labelEl.textContent = e.target.files[0].name;
           wrap.classList.add('has-file');
         } else {
-          label.textContent = 'Choose source file';
+          labelEl.textContent = 'Choose source file';
           wrap.classList.remove('has-file');
         }
       });
       document.getElementById('import-backup-file').addEventListener('change', (e) => {
-        const label = document.getElementById('import-backup-file-label-text');
-        const wrap = e.target.closest('.file-pick-wrap').querySelector('.file-pick-label');
+        const labelEl = document.getElementById('import-backup-file-label-text');
+        const wrap = e.target.closest('.file-pick-label');
         if (e.target.files[0]) {
-          label.textContent = e.target.files[0].name;
+          labelEl.textContent = e.target.files[0].name;
           wrap.classList.add('has-file');
         } else {
-          label.textContent = 'Choose backup file (.json)';
+          labelEl.textContent = 'Choose backup file (.json)';
           wrap.classList.remove('has-file');
         }
       });
@@ -1048,7 +1048,7 @@
         });
         fileInput.value = '';
         document.getElementById('import-file-label-text').textContent = 'Choose source file';
-        fileInput.closest('.file-pick-wrap').querySelector('.file-pick-label').classList.remove('has-file');
+        fileInput.closest('.file-pick-label').classList.remove('has-file');
         document.getElementById('import-new-deck-name').value = '';
         window.UI.toast('Import complete.', 'success');
       } catch (error) {
@@ -1095,7 +1095,7 @@
         const bkInput = document.getElementById('import-backup-file');
         bkInput.value = '';
         document.getElementById('import-backup-file-label-text').textContent = 'Choose backup file (.json)';
-        bkInput.closest('.file-pick-wrap').querySelector('.file-pick-label').classList.remove('has-file');
+        bkInput.closest('.file-pick-label').classList.remove('has-file');
       } catch (error) {
         window.UI.renderBackupSummary(error.message || 'Restore failed.', 'error');
         window.UI.toast(error.message || 'Restore failed.', 'error');
@@ -1319,7 +1319,7 @@
       document.getElementById('pdf-status').classList.add('hidden');
       document.getElementById('pdf-file').value = '';
       document.getElementById('pdf-file-label-text').textContent = 'Choose PDF file';
-      document.querySelector('.file-pick-label').classList.remove('has-file');
+      document.getElementById('pdf-file').closest('.file-pick-label').classList.remove('has-file');
       document.getElementById('pdf-new-deck-name').value = '';
     },
 

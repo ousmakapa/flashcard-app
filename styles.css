@@ -630,20 +630,25 @@ code {
 }
 .maintenance-row:last-child { border-bottom: 0; }
 .danger-row h4 { color: var(--danger); }
-.confirm-dialog {
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: var(--text);
+.ic-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 }
-.confirm-dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
-.confirm-card {
-  min-width: min(520px, calc(100vw - 40px));
+.ic-card {
+  width: min(480px, 100%);
   background: var(--surface);
-  border-radius: 24px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
   padding: 24px;
+  display: grid;
+  gap: 12px;
 }
 .toast-region {
   position: fixed;

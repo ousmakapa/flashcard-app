@@ -464,23 +464,37 @@
   }
 
   function showConfirm(options) {
-    const dialog = document.getElementById('confirm-dialog');
-    if (!dialog) return Promise.resolve({ confirmed: false, formData: new FormData() });
-    document.getElementById('confirm-eyebrow').textContent = options?.eyebrow || 'Confirm';
-    document.getElementById('confirm-title').textContent = options?.title || 'Are you sure?';
-    document.getElementById('confirm-copy').textContent = options?.copy || 'This action cannot be undone.';
-    document.getElementById('confirm-submit').textContent = options?.confirmLabel || 'Confirm';
-    document.getElementById('confirm-submit').className = `btn ${options?.confirmVariant === 'secondary' ? 'btn-secondary' : options?.confirmVariant === 'primary' ? 'btn-primary' : 'btn-danger'}`;
-    const extra = document.getElementById('confirm-extra');
-    extra.innerHTML = options?.extraHTML || '';
-
     return new Promise((resolve) => {
-      const handleClose = () => {
-        dialog.removeEventListener('close', handleClose);
-        resolve({ confirmed: dialog.returnValue === 'confirm', formData: new FormData(dialog.querySelector('form')) });
+      const overlay = document.createElement('div');
+      overlay.className = 'ic-overlay';
+      const btnVariant = options?.confirmVariant === 'secondary' ? 'btn-secondary'
+        : options?.confirmVariant === 'primary' ? 'btn-primary' : 'btn-danger';
+      overlay.innerHTML = `
+        <div class="ic-card" role="dialog" aria-modal="true">
+          <div class="eyebrow">${options?.eyebrow || 'Confirm'}</div>
+          <h3>${options?.title || 'Are you sure?'}</h3>
+          <p class="panel-copy">${options?.copy || 'This action cannot be undone.'}</p>
+          ${options?.extraHTML ? `<div class="stack-form ic-extra">${options.extraHTML}</div>` : ''}
+          <div class="button-row right-aligned">
+            <button class="btn btn-secondary ic-cancel">Cancel</button>
+            <button class="btn ${btnVariant} ic-confirm">${options?.confirmLabel || 'Confirm'}</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+
+      const cleanup = (confirmed) => {
+        const fd = new FormData();
+        overlay.querySelectorAll('input, select, textarea').forEach((el) => {
+          if (el.name) fd.set(el.name, el.value);
+        });
+        document.body.removeChild(overlay);
+        resolve({ confirmed, formData: fd });
       };
-      dialog.addEventListener('close', handleClose, { once: true });
-      dialog.showModal();
+
+      overlay.querySelector('.ic-confirm').addEventListener('click', () => cleanup(true));
+      overlay.querySelector('.ic-cancel').addEventListener('click', () => cleanup(false));
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); });
+      overlay.querySelector('.ic-confirm').focus();
     });
   }
 

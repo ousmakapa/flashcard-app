@@ -1,6 +1,6 @@
 # Offline Flashcards V5
 
-A lightweight offline flashcard web app that runs entirely in the browser by opening `index.html` locally.
+A lightweight offline flashcard web app that runs entirely in the browser. It can be hosted as a normal static site and installed on iPad from Safari.
 
 ## What is new in V5
 
@@ -24,6 +24,10 @@ A lightweight offline flashcard web app that runs entirely in the browser by ope
 - importer.js
 - stats.js
 - ui.js
+- manifest.json
+- sw.js
+- icon.svg
+- icon-192.png
 - sample_import.txt
 - sample_import.csv
 
@@ -31,9 +35,28 @@ A lightweight offline flashcard web app that runs entirely in the browser by ope
 
 1. Download the bundle and unzip it.
 2. Open `index.html` in a modern browser.
-3. Create a deck or import a TXT / CSV file.
+3. Create a deck or import an APKG / CSV / TSV / TXT file.
 4. Start review from the Dashboard or Review tab.
 5. Export a backup regularly from Import / Export.
+
+## Use it on iPad
+
+The app is now a static web/PWA build, so it only needs these files on any static host. Good options are GitHub Pages, Netlify, Cloudflare Pages, Vercel static hosting, or any ordinary web server.
+
+1. Upload the whole folder to your host.
+2. Open the hosted HTTPS URL in Safari on the iPad.
+3. Tap Share, then Add to Home Screen.
+4. Launch Ankur from the home-screen icon.
+
+Offline mode starts after the first successful load. Your decks, cards, review history, images, and settings are stored locally in that iPad browser, so use Export backup before changing devices, clearing Safari data, or deleting the home-screen app.
+
+For quick local testing from this folder:
+
+```sh
+python -m http.server 8000
+```
+
+Then open `http://localhost:8000`. Service workers and full offline behavior require serving over HTTP/HTTPS; opening `index.html` directly still works for basic browser use, but it cannot install the offline app shell.
 
 ## Import formats
 
@@ -72,9 +95,8 @@ Restore behavior:
 ## Known limitations
 
 - search still uses cursor filtering for contains-match text search; it is fine for a few thousand cards but is not a full text-search engine
-- no sync or accounts
 - no audio/video/media other than images
-- no .apkg import
+- no sync or accounts; move data between devices with Export / Restore backup
 - image-heavy backups can become large
 
 ## Manual regression checklist

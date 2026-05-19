@@ -2,104 +2,82 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Offline Flashcards V5</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#316cff" />
+  <meta name="description" content="Spaced-repetition flashcards. No account required. Works offline." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Ankur" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>Ankur</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <div class="site-shell">
     <header class="site-header">
       <div class="brand-block">
-        <div class="brand-mark">OF</div>
-        <div>
-          <h1>Offline Flashcards</h1>
-          <p>Calm local study with spaced repetition, images, and reliable backups.</p>
-        </div>
+        <div class="brand-mark">AN</div>
+        <span class="brand-name">Ankur</span>
       </div>
       <div class="header-actions">
-        <button id="quick-refresh" class="btn btn-secondary">Refresh</button>
-        <button id="quick-review-all" class="btn btn-primary">Start review</button>
+        <button id="quick-refresh" class="btn btn-ghost btn-sm">Refresh</button>
+        <button id="quick-review-all" class="btn btn-primary btn-sm">Study now</button>
       </div>
     </header>
 
     <nav class="top-nav" aria-label="Primary">
-      <button class="nav-link active" data-view="dashboard">Dashboard</button>
+      <button class="nav-link active" data-view="study">Study</button>
+      <button class="nav-link" data-view="cards">Cards</button>
       <button class="nav-link" data-view="decks">Decks</button>
-      <button class="nav-link" data-view="review">Review</button>
-      <button class="nav-link" data-view="manage">Manage Cards</button>
-      <button class="nav-link" data-view="import-export">Import / Export</button>
-      <button class="nav-link" data-view="stats">Study Stats</button>
+      <button class="nav-link" data-view="import">Import</button>
+      <button class="nav-link" data-view="stats">Stats</button>
       <button class="nav-link" data-view="settings">Settings</button>
     </nav>
 
     <main class="page-shell">
       <section id="message-region" class="message-region" aria-live="polite"></section>
 
-      <section class="view active" id="view-dashboard">
-        <div class="hero-card">
-          <div>
-            <div class="eyebrow">Today at a glance</div>
-            <h2>Pick up where you left off.</h2>
-            <p id="dashboard-hero-copy">Your due cards, deck health, and recent study activity are all here.</p>
-          </div>
-          <div class="hero-actions">
-            <div class="metric-chip">
-              <span class="metric-chip-label">Due now</span>
-              <strong id="hero-due-now">0</strong>
-            </div>
-            <div class="metric-chip">
-              <span class="metric-chip-label">Due today</span>
-              <strong id="hero-due-today">0</strong>
-            </div>
-            <button id="dashboard-start-review" class="btn btn-primary btn-large">Review due cards</button>
-          </div>
-        </div>
-        <div class="stat-strip" id="dashboard-stat-cards"></div>
-        <div class="panel">
-          <div class="panel-head">
-            <div>
-              <div class="eyebrow">Deck health</div>
-              <h3>Deck overview</h3>
-            </div>
-            <p class="panel-copy">Clean counts, current workload, and the decks that need attention.</p>
-          </div>
-          <div id="dashboard-deck-grid" class="deck-grid"></div>
-        </div>
-      </section>
+      <!-- â”€â”€ Study view (home + active review merged) â”€â”€ -->
+      <section class="view active" id="view-study">
 
-      <section class="view" id="view-decks">
-        <div class="split-layout split-layout-narrow-left">
-          <div class="panel sticky-panel">
-            <div class="panel-head">
-              <div>
-                <div class="eyebrow">New deck</div>
-                <h3>Create a deck</h3>
-              </div>
-              <p class="panel-copy">Keep decks flat, readable, and easy to review.</p>
+        <!-- Home state: shown when no active session -->
+        <div id="study-home">
+          <div class="hero-card">
+            <div>
+              <div class="eyebrow">Today at a glance</div>
+              <h2 id="dashboard-hero-heading">Pick up where you left off.</h2>
+              <p id="dashboard-hero-copy">Due cards, deck health, and recent activity all here.</p>
             </div>
-            <form id="create-deck-form" class="stack-form">
-              <label>
-                Deck name
-                <input type="text" id="new-deck-name" maxlength="120" placeholder="e.g. Medicine Foundations" required />
-              </label>
-              <button type="submit" class="btn btn-primary">Create deck</button>
-            </form>
+            <div class="hero-actions">
+              <div class="metric-chip">
+                <span class="metric-chip-label">Due now</span>
+                <strong id="hero-due-now">0</strong>
+              </div>
+              <div class="metric-chip">
+                <span class="metric-chip-label">Due today</span>
+                <strong id="hero-due-today">0</strong>
+              </div>
+              <button id="dashboard-start-review" class="btn btn-primary btn-large">Review due cards</button>
+            </div>
           </div>
+          <div class="stat-strip" id="dashboard-stat-cards"></div>
           <div class="panel">
             <div class="panel-head">
               <div>
-                <div class="eyebrow">Existing decks</div>
-                <h3>Manage decks</h3>
+                <div class="eyebrow">Deck health</div>
+                <h3>Your decks</h3>
               </div>
-              <p class="panel-copy">Rename cleanly, review faster, or delete with an explicit card-handling choice.</p>
             </div>
-            <div id="deck-list" class="deck-list"></div>
+            <div id="dashboard-deck-grid" class="deck-grid"></div>
           </div>
         </div>
-      </section>
 
-      <section class="view" id="view-review">
-        <div class="review-layout">
+        <!-- Session setup: scope picker before starting -->
+        <div class="review-layout hidden" id="study-session-shell">
           <div class="panel review-setup" id="review-setup-panel">
             <div class="panel-head">
               <div>
@@ -127,10 +105,11 @@
             </div>
             <div class="review-setup-actions">
               <button id="start-review-btn" class="btn btn-primary btn-large">Start review</button>
-              <p class="subtle-note">Space shows the answer. 1–4 rate the card. Z undoes the last rating.</p>
+              <p class="subtle-note">Space shows the answer. 1-4 rate the card. Z undoes the last rating.</p>
             </div>
           </div>
 
+          <!-- Active card panel -->
           <div class="panel review-panel hidden" id="review-panel">
             <div class="review-meta-row">
               <div>
@@ -164,51 +143,53 @@
             </div>
             <div id="rating-row" class="rating-grid hidden" aria-label="Rate card">
               <button class="rating-btn rating-again" data-rating="again"><span class="rating-main">Again</span><span class="rating-preview" data-preview-for="again"></span><span class="rating-shortcut">1</span></button>
-              <button class="rating-btn rating-hard" data-rating="hard"><span class="rating-main">Hard</span><span class="rating-preview" data-preview-for="hard"></span><span class="rating-shortcut">2</span></button>
-              <button class="rating-btn rating-good" data-rating="good"><span class="rating-main">Good</span><span class="rating-preview" data-preview-for="good"></span><span class="rating-shortcut">3</span></button>
-              <button class="rating-btn rating-easy" data-rating="easy"><span class="rating-main">Easy</span><span class="rating-preview" data-preview-for="easy"></span><span class="rating-shortcut">4</span></button>
+              <button class="rating-btn rating-hard"  data-rating="hard"><span class="rating-main">Hard</span><span class="rating-preview" data-preview-for="hard"></span><span class="rating-shortcut">2</span></button>
+              <button class="rating-btn rating-good"  data-rating="good"><span class="rating-main">Good</span><span class="rating-preview" data-preview-for="good"></span><span class="rating-shortcut">3</span></button>
+              <button class="rating-btn rating-easy"  data-rating="easy"><span class="rating-main">Easy</span><span class="rating-preview" data-preview-for="easy"></span><span class="rating-shortcut">4</span></button>
             </div>
             <div class="review-footer-actions">
               <div class="button-row left-aligned">
-                <button id="undo-last-rating-btn" class="btn btn-secondary" disabled>Undo last rating</button>
-                <button id="suspend-current-card-btn" class="btn btn-secondary" disabled>Suspend card</button>
-                <button id="edit-current-card-btn" class="btn btn-secondary" disabled>Edit card</button>
-                <button id="end-review-btn" class="btn btn-ghost">End session</button>
+                <button id="undo-last-rating-btn"    class="btn btn-secondary" disabled>Undo</button>
+                <button id="suspend-current-card-btn" class="btn btn-secondary" disabled>Suspend</button>
+                <button id="edit-current-card-btn"    class="btn btn-secondary" disabled>Edit</button>
+                <button id="end-review-btn"           class="btn btn-ghost">End session</button>
               </div>
-              <div class="shortcut-hint">Keyboard: Space = show answer · 1 2 3 4 = rate · Z = undo</div>
+              <div class="shortcut-hint">Space = show answer - 1 2 3 4 = rate - Z = undo</div>
             </div>
           </div>
 
+          <!-- Empty / caught-up panel -->
           <div class="panel review-empty hidden" id="review-empty-panel">
             <div class="panel-head compact-gap">
               <div>
                 <div class="eyebrow">Nothing due right now</div>
-                <h3 id="review-empty-title">You’re caught up.</h3>
+                <h3 id="review-empty-title">You're caught up.</h3>
               </div>
-              <p class="panel-copy" id="review-empty-subtitle">The next card will appear here automatically when it becomes due.</p>
+              <p class="panel-copy" id="review-empty-subtitle">The next card will appear automatically when it becomes due.</p>
             </div>
             <div class="empty-grid">
               <div class="empty-stat">
                 <span class="empty-label">Next card due</span>
-                <strong id="review-next-due-relative">—</strong>
-                <span id="review-next-due-exact" class="empty-subtle">—</span>
+                <strong id="review-next-due-relative">--</strong>
+                <span id="review-next-due-exact" class="empty-subtle">--</span>
               </div>
               <div class="empty-stat">
                 <span class="empty-label">Hidden new cards</span>
                 <strong id="review-hidden-new-count">0</strong>
-                <span class="empty-subtle">Respecting today’s limit</span>
+                <span class="empty-subtle">Respecting today's limit</span>
               </div>
             </div>
             <div class="button-row left-aligned">
-              <button id="review-empty-refresh-btn" class="btn btn-secondary">Refresh now</button>
-              <button id="review-empty-change-scope-btn" class="btn btn-ghost">Change scope</button>
+              <button id="review-empty-refresh-btn"       class="btn btn-secondary">Refresh now</button>
+              <button id="review-empty-change-scope-btn"  class="btn btn-ghost">Change scope</button>
             </div>
             <p id="review-empty-refresh-note" class="subtle-note">Auto-refreshing while you stay on this screen.</p>
           </div>
         </div>
       </section>
 
-      <section class="view" id="view-manage">
+      <!-- â”€â”€ Cards view â”€â”€ -->
+      <section class="view" id="view-cards">
         <div class="split-layout split-layout-equal">
           <div class="panel sticky-panel">
             <div class="panel-head">
@@ -216,7 +197,6 @@
                 <div class="eyebrow">Card editor</div>
                 <h3 id="card-form-title">Add card</h3>
               </div>
-              <p class="panel-copy">Front, back, deck, tags, and images stay prominent. Scheduling stays tucked away.</p>
             </div>
             <form id="card-form" class="stack-form">
               <input type="hidden" id="card-id" />
@@ -224,6 +204,16 @@
                 Deck
                 <select id="card-deck" required></select>
               </label>
+              <div class="card-type-row">
+                <label class="inline-label">
+                  Card type
+                  <select id="card-type">
+                    <option value="basic">Basic</option>
+                    <option value="cloze">Cloze</option>
+                  </select>
+                </label>
+                <button type="button" id="cloze-wrap-btn" class="btn btn-secondary btn-sm hidden" title="Wrap selected text as {{c1::â€¦}}">Wrap {{c1::}}</button>
+              </div>
               <label>
                 Front
                 <textarea id="card-question" rows="5" placeholder="Card front" required></textarea>
@@ -311,9 +301,8 @@
             <div class="panel-head">
               <div>
                 <div class="eyebrow">Library</div>
-                <h3>Manage cards</h3>
+                <h3>All cards</h3>
               </div>
-              <p class="panel-copy">Search cleanly, filter by deck or state, and run safe bulk actions.</p>
             </div>
             <div class="toolbar toolbar-grid">
               <input id="manage-search" type="search" placeholder="Search front, back, or tags" />
@@ -328,11 +317,11 @@
               <span id="manage-selected-count">0 selected</span>
               <div class="button-row left-aligned">
                 <select id="bulk-move-deck"></select>
-                <button id="bulk-move-btn" class="btn btn-secondary">Move</button>
-                <button id="bulk-suspend-btn" class="btn btn-secondary">Suspend</button>
-                <button id="bulk-unsuspend-btn" class="btn btn-secondary">Unsuspend</button>
-                <button id="bulk-reset-btn" class="btn btn-secondary">Reset scheduling</button>
-                <button id="bulk-delete-btn" class="btn btn-danger">Delete</button>
+                <button id="bulk-move-btn"       class="btn btn-secondary">Move</button>
+                <button id="bulk-suspend-btn"    class="btn btn-secondary">Suspend</button>
+                <button id="bulk-unsuspend-btn"  class="btn btn-secondary">Unsuspend</button>
+                <button id="bulk-reset-btn"      class="btn btn-secondary">Reset scheduling</button>
+                <button id="bulk-delete-btn"     class="btn btn-danger">Delete</button>
               </div>
             </div>
             <div class="table-shell">
@@ -358,28 +347,59 @@
         </div>
       </section>
 
-      <section class="view" id="view-import-export">
+      <!-- â”€â”€ Decks view â”€â”€ -->
+      <section class="view" id="view-decks">
+        <div class="split-layout split-layout-narrow-left">
+          <div class="panel sticky-panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">New deck</div>
+                <h3>Create a deck</h3>
+              </div>
+            </div>
+            <form id="create-deck-form" class="stack-form">
+              <label>
+                Deck name
+                <input type="text" id="new-deck-name" maxlength="120" placeholder="e.g. Medicine Foundations" required />
+              </label>
+              <button type="submit" class="btn btn-primary">Create deck</button>
+            </form>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="eyebrow">Existing decks</div>
+                <h3>Manage decks</h3>
+              </div>
+            </div>
+            <div id="deck-list" class="deck-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- â”€â”€ Import view â”€â”€ -->
+      <section class="view" id="view-import">
         <div class="split-layout split-layout-narrow-left">
           <div class="panel sticky-panel">
             <div class="panel-head">
               <div>
                 <div class="eyebrow">Import cards</div>
-                <h3>Bring cards in safely</h3>
+                <h3>Bring cards in</h3>
               </div>
-              <p class="panel-copy">TXT uses <code>front;back</code>. CSV uses <code>front,back,deck,tags</code>. Duplicates are skipped, not fatal.</p>
+              <p class="panel-copy">Supports <strong>.apkg</strong> (Anki), <strong>.csv</strong> (<code>front,back,deck,tags</code>), <strong>.tsv</strong> (Anki plain text), and <strong>.txt</strong> (<code>front;back</code>). Duplicates skipped automatically.</p>
             </div>
             <form id="import-form" class="stack-form">
               <label>
                 Source file
-                <input id="import-file" type="file" accept=".txt,.csv,text/plain,text/csv" required />
+                <input id="import-file" type="file" accept=".apkg,.csv,.tsv,.txt,application/zip,text/plain,text/csv,text/tab-separated-values" required />
               </label>
               <label>
-                Target deck (TXT only)
+                Target deck (TXT, TSV, and .apkg)
                 <select id="import-deck-select"></select>
               </label>
               <label>
-                Or create new deck while importing
-                <input id="import-new-deck-name" type="text" maxlength="120" placeholder="Optional new deck name" />
+                Or create a new deck during import
+                <input id="import-new-deck-name" type="text" maxlength="120" placeholder="Optional â€” new deck name" />
               </label>
               <button type="submit" class="btn btn-primary">Import cards</button>
             </form>
@@ -391,7 +411,7 @@
                 <div class="eyebrow">Backup and restore</div>
                 <h3>Keep your data safe</h3>
               </div>
-              <p class="panel-copy">Backups include decks, cards, review logs, settings, and images. Image-heavy backups can be large.</p>
+              <p class="panel-copy">Backups include decks, cards, review logs, settings, and images.</p>
             </div>
             <div class="summary-box">
               <h4>Export full backup</h4>
@@ -400,7 +420,7 @@
             </div>
             <div class="summary-box danger-box">
               <h4>Restore backup</h4>
-              <p class="panel-copy">Restore is validated before replacement and runs atomically. A safety backup is downloaded first.</p>
+              <p class="panel-copy">Validated before replacement and runs atomically. A safety backup is downloaded first.</p>
               <input id="import-backup-file" type="file" accept=".json,application/json" />
               <button id="import-backup-btn" class="btn btn-danger">Restore backup</button>
             </div>
@@ -409,6 +429,7 @@
         </div>
       </section>
 
+      <!-- â”€â”€ Stats view â”€â”€ -->
       <section class="view" id="view-stats">
         <div class="panel">
           <div class="panel-head">
@@ -416,7 +437,6 @@
               <div class="eyebrow">Study progress</div>
               <h3>Daily activity</h3>
             </div>
-            <p class="panel-copy">Review logs are the source of truth for activity and deck progress.</p>
           </div>
           <div id="stats-top-strip" class="stat-strip"></div>
           <div id="stats-daily-chart" class="daily-chart"></div>
@@ -427,7 +447,6 @@
               <div class="eyebrow">By deck</div>
               <h3>Per-deck progress</h3>
             </div>
-            <p class="panel-copy">Mastery, workload, reviews, and last study time, deck by deck.</p>
           </div>
           <div class="table-shell">
             <table class="data-table">
@@ -450,6 +469,7 @@
         </div>
       </section>
 
+      <!-- â”€â”€ Settings view â”€â”€ -->
       <section class="view" id="view-settings">
         <div class="split-layout split-layout-narrow-left">
           <div class="panel sticky-panel">
@@ -458,7 +478,6 @@
                 <div class="eyebrow">Preferences</div>
                 <h3>Study settings</h3>
               </div>
-              <p class="panel-copy">Keep defaults simple. Dangerous actions stay clearly separated.</p>
             </div>
             <div class="stack-form">
               <label>
@@ -503,7 +522,7 @@
                 <div class="maintenance-row">
                   <div>
                     <h4>Delete orphaned media</h4>
-                    <p id="orphan-media-note" class="panel-copy">Checks the media store for images that are no longer referenced.</p>
+                    <p id="orphan-media-note" class="panel-copy">Checks the media store for images no longer referenced.</p>
                   </div>
                   <button id="cleanup-orphan-media-btn" class="btn btn-secondary">Clean orphan media</button>
                 </div>
@@ -547,8 +566,14 @@
   <script src="./db.js"></script>
   <script src="./scheduler.js"></script>
   <script src="./importer.js"></script>
+  <script src="./apkg_reader.js"></script>
   <script src="./stats.js"></script>
   <script src="./ui.js"></script>
   <script src="./app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+  </script>
 </body>
 </html>

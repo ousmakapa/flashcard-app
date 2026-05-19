@@ -233,6 +233,7 @@
       lastRating: RATINGS.includes(record.lastRating) ? record.lastRating : null,
       lastReviewIntervalDays: clampNumber(record.lastReviewIntervalDays, 0, 0, null, true),
       suspended: !!record.suspended,
+      cardType: record.cardType === 'cloze' ? 'cloze' : 'basic',
     };
     card.searchText = buildSearchText(card);
     return card;
@@ -263,6 +264,7 @@
       lastRating: RATINGS.includes(normalized.lastRating) ? normalized.lastRating : null,
       lastReviewIntervalDays: clampNumber(normalized.lastReviewIntervalDays, 0, 0, null, true),
       suspended: !!normalized.suspended,
+      cardType: normalized.cardType === 'cloze' ? 'cloze' : 'basic',
     };
     if (!card.deckId) throw new Error('Card deck is required.');
     if (!card.question) throw new Error('Front is required.');
@@ -356,10 +358,13 @@
   }
 
   async function listDecks() {
-    const decks = await tx(['decks'], 'readonly', async ({ decks }) => reqToPromise(decks.getAll()));
-    const normalized = (decks || []).map(normalizeDeckForRead).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name));
-    if (!normalized.find((deck) => deck.name === DEFAULT_DECK_NAME)) await ensureDefaultDeck();
-    return (await tx(['decks'], 'readonly', async ({ decks }) => reqToPromise(decks.getAll()))).map(normalizeDeckForRead).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name));
+    const raw = await tx(['decks'], 'readonly', async ({ decks }) => reqToPromise(decks.getAll()));
+    const normalized = (raw || []).map(normalizeDeckForRead).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name));
+    if (normalized.find((deck) => deck.name === DEFAULT_DECK_NAME)) return normalized;
+    // Default deck is missing — create it and re-read.
+    await ensureDefaultDeck();
+    const updated = await tx(['decks'], 'readonly', async ({ decks }) => reqToPromise(decks.getAll()));
+    return (updated || []).map(normalizeDeckForRead).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name));
   }
 
   async function getDeck(deckId) {
@@ -970,6 +975,22 @@
     });
   }
 
+  async function bulkCreateMedia(mediaInputs) {
+    const records = (mediaInputs || []).map((item) => prepareMediaForWrite({
+      id: item?.id,
+      name: item?.name,
+      type: item?.type,
+      size: item?.size,
+      blob: item?.blob,
+      refCount: 0,
+    }));
+    if (!records.length) return [];
+    return tx(['media'], 'readwrite', async ({ media }) => {
+      records.forEach((record) => media.put(record));
+      return records;
+    });
+  }
+
   async function getMedia(mediaId) {
     if (!mediaId) return null;
     const record = await tx(['media'], 'readonly', async ({ media }) => reqToPromise(media.get(mediaId)));
@@ -1189,6 +1210,7 @@
     getDashboardSnapshot,
     searchCards,
     createMediaFromFile,
+    bulkCreateMedia,
     getMedia,
     listMedia,
     deleteMedia,

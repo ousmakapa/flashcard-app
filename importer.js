@@ -110,9 +110,53 @@
     return { fileType: 'csv', imported, skipped };
   }
 
+  // TSV (tab-separated values) — matches Anki's "Export Notes as Plain Text" format.
+  // Supports an optional header row with columns: front, back, tags (case-insensitive).
+  // Without a header, the first two columns are treated as front and back.
+  function parseTSVText(text) {
+    const rows = String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/);
+    const imported = [];
+    const skipped  = [];
+    let headerMap  = null;
+
+    rows.forEach((rawLine, index) => {
+      const row = index + 1;
+      if (!rawLine.trim()) return;
+
+      const values = rawLine.split('\t').map((v) => v.trim());
+
+      // Detect header row: first non-empty row that contains "front" and "back" columns.
+      if (!headerMap) {
+        const lower = values.map((v) => v.toLowerCase());
+        const fi = lower.indexOf('front');
+        const bi = lower.indexOf('back');
+        if (fi !== -1 && bi !== -1) {
+          headerMap = { front: fi, back: bi, tags: lower.indexOf('tags') };
+          return; // header row consumed
+        }
+        // No header — default to col 0 = front, col 1 = back, col 2 = tags.
+        headerMap = { front: 0, back: 1, tags: 2 };
+      }
+
+      const question = String(values[headerMap.front] || '').trim();
+      const answer   = String(values[headerMap.back]  || '').trim();
+      const rawTags  = headerMap.tags >= 0 ? String(values[headerMap.tags] || '') : '';
+      const tags     = rawTags ? normalizeTags(rawTags.replace(/\s+/g, ',')) : [];
+
+      if (!question || !answer) {
+        skipped.push({ row, reason: 'Front or back is empty' });
+        return;
+      }
+      imported.push({ row, question, answer, deckName: '', tags });
+    });
+
+    return { fileType: 'tsv', imported, skipped };
+  }
+
   function parseImportFile(fileName, text) {
     const lower = String(fileName || '').toLowerCase();
     if (lower.endsWith('.csv')) return parseCSVText(text);
+    if (lower.endsWith('.tsv')) return parseTSVText(text);
     return parseTextToCards(text);
   }
 
@@ -301,6 +345,7 @@
     normalizeTags,
     parseTextToCards,
     parseCSVText,
+    parseTSVText,
     parseImportFile,
     detectImportDuplicates,
     blobToBase64,

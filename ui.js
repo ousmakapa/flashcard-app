@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   const activeObjectUrls = new Set();
 
   function esc(value) {
@@ -30,6 +30,27 @@
   function setActiveView(viewId) {
     document.querySelectorAll('.view').forEach((section) => section.classList.toggle('active', section.id === `view-${viewId}`));
     document.querySelectorAll('.nav-link').forEach((button) => button.classList.toggle('active', button.dataset.view === viewId));
+    // When navigating to the study view from outside, reset to home state.
+    if (viewId === 'study') {
+      const home = document.getElementById('study-home');
+      const shell = document.getElementById('study-session-shell');
+      if (home) home.classList.remove('hidden');
+      if (shell) shell.classList.add('hidden');
+    }
+  }
+
+  // Cloze rendering helpers
+
+  // Replaces {{c1::word}} and {{cN::word::hint}} syntax with styled spans.
+  // All user-supplied text is escaped; only the span wrapper uses innerHTML.
+  function renderClozeQuestion(rawText) {
+    return String(rawText || '')
+      .replace(/\{\{c\d+::([^:}]+)(?:::[^}]*)?\}\}/g, () => `<span class="cloze-blank">[...]</span>`);
+  }
+
+  function renderClozeAnswer(rawText) {
+    return String(rawText || '')
+      .replace(/\{\{c\d+::([^:}]+)(?:::[^}]*)?\}\}/g, (_, word) => `<span class="cloze-reveal">${esc(word)}</span>`);
   }
 
   function showMessage(text, kind) {
@@ -162,7 +183,7 @@
       card.className = 'media-thumb';
       card.innerHTML = `
         <img alt="" src="${esc(url || '')}" />
-        <button type="button" data-remove-media="${esc(draft.localId)}">×</button>
+        <button type="button" data-remove-media="${esc(draft.localId)}">x</button>
         <div class="media-meta">${esc(draft.name || 'image')}</div>
       `;
       container.appendChild(card);
@@ -194,6 +215,11 @@
     document.getElementById('card-last-review-interval').value = card?.lastReviewIntervalDays ?? 0;
     document.getElementById('card-suspended').checked = !!card?.suspended;
     document.getElementById('card-advanced').open = !!card;
+    const cardType = card?.cardType || 'basic';
+    const typeSelect = document.getElementById('card-type');
+    const wrapBtn = document.getElementById('cloze-wrap-btn');
+    if (typeSelect) typeSelect.value = cardType;
+    if (wrapBtn) wrapBtn.classList.toggle('hidden', cardType !== 'cloze');
     await renderMediaDrafts('card-front-preview', drafts.front || []);
     await renderMediaDrafts('card-back-preview', drafts.back || []);
   }
@@ -281,7 +307,15 @@
     document.getElementById('review-eyebrow').textContent = scopeLabel || 'Reviewing';
   }
 
+  function showStudySession() {
+    const home = document.getElementById('study-home');
+    const shell = document.getElementById('study-session-shell');
+    if (home) home.classList.add('hidden');
+    if (shell) shell.classList.remove('hidden');
+  }
+
   async function renderReviewCard(session) {
+    showStudySession();
     const question = document.getElementById('review-question');
     const answer = document.getElementById('review-answer');
     const answerWrap = document.getElementById('review-answer-wrap');
@@ -290,18 +324,27 @@
     const panel = document.getElementById('review-panel');
     const setup = document.getElementById('review-setup-panel');
     const empty = document.getElementById('review-empty-panel');
-    setup.classList.add('hidden');
-    empty.classList.add('hidden');
-    panel.classList.remove('hidden');
+    if (setup) setup.classList.add('hidden');
+    if (empty) empty.classList.add('hidden');
+    if (panel) panel.classList.remove('hidden');
 
     document.getElementById('review-deck-name').textContent = session.deckName;
-    document.getElementById('review-session-meta').textContent = `${session.remainingCount} due card${session.remainingCount === 1 ? '' : 's'} left · ${session.reviewedCount} reviewed this session`;
+    document.getElementById('review-session-meta').textContent = `${session.remainingCount} due card${session.remainingCount === 1 ? '' : 's'} left - ${session.reviewedCount} reviewed this session`;
     document.getElementById('review-state-pill').textContent = session.card.state;
     document.getElementById('review-due-pill').textContent = window.Stats.formatDateTime(session.card.dueAt);
     document.getElementById('review-progress-pill').textContent = `${session.reviewedCount}/${session.totalCount}`;
     document.getElementById('review-progress-bar').style.width = `${session.totalCount ? (session.reviewedCount / session.totalCount) * 100 : 0}%`;
-    question.textContent = session.card.question;
-    answer.textContent = session.card.answer;
+
+    // Render question / answer. Cloze cards use innerHTML, basic cards use textContent.
+    const isCloze = session.card.cardType === 'cloze';
+    if (isCloze) {
+      question.innerHTML = renderClozeQuestion(session.card.question);
+      answer.innerHTML = renderClozeAnswer(session.card.question); // cloze answer reveals the same text
+    } else {
+      question.textContent = session.card.question;
+      answer.textContent = session.card.answer;
+    }
+
     answerWrap.classList.toggle('hidden', !session.answerShown);
     showAnswerRow.classList.toggle('hidden', session.answerShown);
     ratingRow.classList.toggle('hidden', !session.answerShown);
@@ -326,21 +369,37 @@
   }
 
   function renderReviewSetup(scopeName) {
-    document.getElementById('review-setup-panel').classList.remove('hidden');
-    document.getElementById('review-panel').classList.add('hidden');
-    document.getElementById('review-empty-panel').classList.add('hidden');
-    document.getElementById('review-deck-name').textContent = scopeName || 'All due cards';
+    showStudySession();
+    const setup = document.getElementById('review-setup-panel');
+    const panel = document.getElementById('review-panel');
+    const empty = document.getElementById('review-empty-panel');
+    if (setup) setup.classList.remove('hidden');
+    if (panel) panel.classList.add('hidden');
+    if (empty) empty.classList.add('hidden');
+    const deckName = document.getElementById('review-deck-name');
+    if (deckName) deckName.textContent = scopeName || 'All due cards';
   }
 
   function renderReviewEmpty(state) {
-    document.getElementById('review-setup-panel').classList.add('hidden');
-    document.getElementById('review-panel').classList.add('hidden');
-    document.getElementById('review-empty-panel').classList.remove('hidden');
-    document.getElementById('review-next-due-relative').textContent = state.nextDueRelative || '—';
-    document.getElementById('review-next-due-exact').textContent = state.nextDueExact || '—';
+    showStudySession();
+    const setup = document.getElementById('review-setup-panel');
+    const panel = document.getElementById('review-panel');
+    const empty = document.getElementById('review-empty-panel');
+    if (setup) setup.classList.add('hidden');
+    if (panel) panel.classList.add('hidden');
+    if (empty) empty.classList.remove('hidden');
+    document.getElementById('review-next-due-relative').textContent = state.nextDueRelative || '--';
+    document.getElementById('review-next-due-exact').textContent = state.nextDueExact || '--';
     document.getElementById('review-hidden-new-count').textContent = state.hiddenNewCount || 0;
-    document.getElementById('review-empty-title').textContent = state.title || 'You’re caught up.';
+    document.getElementById('review-empty-title').textContent = state.title || "You're caught up.";
     document.getElementById('review-empty-subtitle').textContent = state.subtitle || 'The next card will appear here automatically when it becomes due.';
+  }
+
+  function renderStudyHome() {
+    const home = document.getElementById('study-home');
+    const shell = document.getElementById('study-session-shell');
+    if (home) home.classList.remove('hidden');
+    if (shell) shell.classList.add('hidden');
   }
 
   function renderStats(data) {
@@ -352,7 +411,7 @@
     dailyRoot.innerHTML = data.dailyStats.slice(-14).map((day) => {
       const height = Math.max(8, Math.round((day.cardsReviewed / maxReviewed) * 160));
       return `
-        <div class="day-bar" title="${esc(day.dateKey)} · ${day.cardsReviewed} reviewed">
+        <div class="day-bar" title="${esc(day.dateKey)} - ${day.cardsReviewed} reviewed">
           <div class="day-bar-value">${day.cardsReviewed}</div>
           <div class="day-bar-fill" style="height:${height}px"></div>
           <div class="day-bar-label">${esc(day.dateKey.slice(5))}</div>
@@ -418,7 +477,15 @@
     renderReviewSetup,
     renderReviewCard,
     renderReviewEmpty,
+    renderStudyHome,
+    renderClozeQuestion,
+    renderClozeAnswer,
     renderStats,
     showConfirm,
   };
 })();
+
+
+
+
+

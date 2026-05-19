@@ -35,7 +35,7 @@
 
   const App = {
     state: {
-      currentView: 'dashboard',
+      currentView: 'study',
       decks: [],
       dashboard: null,
       storage: { deckCount: 0, cardCount: 0, reviewLogCount: 0, metaCount: 0, mediaCount: 0 },
@@ -62,8 +62,8 @@
         this.bindEvents();
         await this.loadSettings();
         await this.refreshBaseData();
-        await this.switchView('dashboard');
-        window.UI.showMessage('Offline Flashcards V5 is ready. Everything stays local to this browser until you export a backup.', 'success');
+        await this.switchView('study');
+        window.UI.showMessage('Ankur is ready. Everything stays local to this browser.', 'success');
       } catch (error) {
         console.error(error);
         window.UI.showMessage(error.message || 'Failed to initialize the app.', 'error');
@@ -77,6 +77,13 @@
       document.getElementById('quick-refresh').addEventListener('click', () => this.refreshCurrentView(true));
       document.getElementById('quick-review-all').addEventListener('click', () => this.launchReviewForScope('all'));
       document.getElementById('dashboard-start-review').addEventListener('click', () => this.launchReviewForScope('all'));
+
+      // Cloze editor controls
+      document.getElementById('card-type').addEventListener('change', (event) => {
+        const isCloze = event.target.value === 'cloze';
+        document.getElementById('cloze-wrap-btn').classList.toggle('hidden', !isCloze);
+      });
+      document.getElementById('cloze-wrap-btn').addEventListener('click', () => this.wrapAsCloze());
 
       document.getElementById('create-deck-form').addEventListener('submit', (event) => this.handleCreateDeck(event));
       document.getElementById('deck-list').addEventListener('click', (event) => this.handleDeckListClick(event));
@@ -109,7 +116,7 @@
         this.state.manageSearchTimer = window.setTimeout(() => {
           this.state.manageState.page = 1;
           this.renderManageView();
-        }, 180);
+        }, 380);
       });
       document.getElementById('manage-deck-filter').addEventListener('change', () => {
         this.state.manageState.page = 1;
@@ -167,14 +174,14 @@
       window.UI.renderStorageSummary(storage);
       window.UI.fillDeckSelect('review-scope-select', decks, { includeAll: true, allLabel: 'All due cards' });
       window.UI.fillDeckSelect('manage-deck-filter', decks, { includeAll: true, allLabel: 'All decks' });
-      window.UI.fillDeckSelect('bulk-move-deck', decks, { includeNone: true, noneLabel: 'Move selected to…' });
+      window.UI.fillDeckSelect('bulk-move-deck', decks, { includeNone: true, noneLabel: 'Move selected to...' });
       window.UI.fillDeckSelect('import-deck-select', decks, { includeNone: true, noneLabel: 'Choose target deck' });
       await this.refreshReviewOverview();
       await this.populateEditorFromCurrentState();
     },
 
     async switchView(view) {
-      if (this.state.currentView === 'manage' && view !== 'manage') {
+      if (this.state.currentView === 'cards' && view !== 'cards') {
         await this.releaseUnusedDraftMedia();
         this.state.cardEditorMedia = { front: [], back: [] };
         this.state.manageState.editingCardId = null;
@@ -186,10 +193,10 @@
 
     async refreshCurrentView(force) {
       if (force) await this.refreshBaseData();
-      if (this.state.currentView === 'review') {
+      if (this.state.currentView === 'study') {
         await this.refreshReviewOverview();
       }
-      if (this.state.currentView === 'manage') {
+      if (this.state.currentView === 'cards') {
         await this.renderManageView();
       }
       if (this.state.currentView === 'stats') {
@@ -393,6 +400,7 @@
         lapses: Number(document.getElementById('card-lapses').value || 0),
         lastReviewIntervalDays: Number(document.getElementById('card-last-review-interval').value || 0),
         suspended: document.getElementById('card-suspended').checked,
+        cardType: document.getElementById('card-type').value === 'cloze' ? 'cloze' : 'basic',
         frontImageIds: this.state.cardEditorMedia.front.map((item) => item.mediaId),
         backImageIds: this.state.cardEditorMedia.back.map((item) => item.mediaId),
       };
@@ -440,7 +448,7 @@
       const deckMap = new Map(this.state.decks.map((deck) => [deck.id, deck.name]));
       result.items = result.items.map((item) => ({ ...item, deckName: deckMap.get(item.deckId) || item.deckId }));
       this.state.manageState.currentItems = result.items;
-      window.UI.fillDeckSelect('bulk-move-deck', this.state.decks, { includeNone: true, noneLabel: 'Move selected to…' });
+      window.UI.fillDeckSelect('bulk-move-deck', this.state.decks, { includeNone: true, noneLabel: 'Move selected to...' });
       window.UI.renderManageTable(result, this.state.manageState);
       await this.populateEditorFromCurrentState();
     },
@@ -617,8 +625,8 @@
     },
 
     async launchReviewForScope(scope) {
-      window.UI.setActiveView('review');
-      this.state.currentView = 'review';
+      window.UI.setActiveView('study');
+      this.state.currentView = 'study';
       document.getElementById('review-scope-select').value = scope || 'all';
       this.prepareReviewSetup();
     },
@@ -705,8 +713,10 @@
         };
         session.reviewedCount += 1;
         session.busy = false;
+        if (applied.isLeech) {
+          window.UI.toast(`Card suspended - too many lapses (${window.Scheduler.LEECH_THRESHOLD}). Edit it to unsuspend.`, 'error');
+        }
         await this.rebuildReviewQueueAfterAction();
-        window.UI.toast('Saved', 'success');
       } catch (error) {
         session.busy = false;
         window.UI.toast(error.message || 'Failed to save review.', 'error');
@@ -761,7 +771,7 @@
       this.endReview(false);
       this.state.manageState.editingCardId = card.id;
       this.state.cardEditorMedia = { front: [], back: [] };
-      await this.switchView('manage');
+      await this.switchView('cards');
       await this.populateEditorFromCurrentState();
     },
 
@@ -771,7 +781,11 @@
       this.state.reviewSession = getDefaultReviewSession();
       this.state.reviewSession.deckId = scope;
       this.state.reviewSession.mode = 'setup';
-      if (returnToSetup) window.UI.renderReviewSetup(scope === 'all' ? 'All due cards' : (this.state.decks.find((deck) => deck.id === scope)?.name || 'Selected deck'));
+      if (returnToSetup) {
+        window.UI.renderReviewSetup(scope === 'all' ? 'All due cards' : (this.state.decks.find((deck) => deck.id === scope)?.name || 'Selected deck'));
+      } else {
+        window.UI.renderStudyHome();
+      }
       this.refreshReviewOverview();
     },
 
@@ -794,12 +808,12 @@
         nextDueRelative: window.Stats.formatRelativeFuture(snapshot.nextDueAt),
         nextDueExact: window.Stats.formatDateTime(snapshot.nextDueAt),
         hiddenNewCount: snapshot.hiddenNewCount,
-        title: 'You’re caught up.',
+        title: "You're caught up.",
         subtitle: 'The next card will appear here automatically when it becomes due.',
       });
       this.clearReviewAutoRefresh();
       this.state.reviewRefreshTimer = window.setTimeout(() => {
-        if (this.state.currentView === 'review' && this.state.reviewSession.mode === 'empty') this.refreshReviewEmptyState(false);
+        if (this.state.currentView === 'study' && this.state.reviewSession.mode === 'empty') this.refreshReviewEmptyState(false);
       }, 30000);
     },
 
@@ -809,30 +823,52 @@
       const file = fileInput.files[0];
       if (!file) return window.UI.toast('Choose a file to import.', 'error');
       try {
-        const text = await file.text();
-        const parsed = window.Importer.parseImportFile(file.name, text);
+        let parsed;
+        const lower = file.name.toLowerCase();
+        if (lower.endsWith('.apkg')) {
+          window.UI.renderImportSummary({ title: 'Reading .apkg file...', copy: 'Extracting ZIP and parsing Anki database. Please wait.' });
+          parsed = await window.ApkgReader.parseApkgFile(file, (msg) => {
+            window.UI.renderImportSummary({ title: msg, copy: 'Parsing notes and preparing image extraction…' });
+          });
+        } else {
+          const text = await file.text();
+          parsed = window.Importer.parseImportFile(file.name, text);
+        }
         const newDeckName = document.getElementById('import-new-deck-name').value.trim();
         let defaultDeckId = document.getElementById('import-deck-select').value || '';
         if (newDeckName) {
           const deck = await window.DB.createDeck(newDeckName);
           defaultDeckId = deck.id;
         }
-        if (parsed.fileType === 'txt' && !defaultDeckId) throw new Error('Choose a target deck for TXT imports or create a new deck.');
+        if (['txt', 'tsv'].includes(parsed.fileType) && !defaultDeckId) {
+          throw new Error('Choose a target deck for this import type, or create a new deck above.');
+        }
 
         const rows = parsed.imported.map((row) => ({
           ...row,
-          deckId: parsed.fileType === 'csv' ? null : defaultDeckId,
+          deckId: parsed.fileType === 'csv' ? null : (defaultDeckId || null),
+          deckName: (parsed.fileType === 'csv' || (!defaultDeckId && parsed.fileType === 'apkg')) ? (row.deckName || '') : '',
         }));
 
         const resolvedRows = [];
         for (const row of rows) {
           let deckId = row.deckId;
-          if (parsed.fileType === 'csv') {
-            const deckName = row.deckName || defaultDeckId || window.DB.DEFAULT_DECK_NAME;
-            let targetDeck = this.state.decks.find((item) => item.name.toLowerCase() === String(deckName).toLowerCase()) || null;
-            if (!targetDeck) {
-              targetDeck = await window.DB.createDeck(deckName);
-              this.state.decks.push(targetDeck);
+          if (parsed.fileType === 'csv' || (!deckId && parsed.fileType === 'apkg')) {
+            const fallbackDeckId = defaultDeckId || 'default';
+            const deckName = String(row.deckName || '').trim();
+            let targetDeck = null;
+            if (deckName) {
+              targetDeck = this.state.decks.find((item) => item.name.toLowerCase() === deckName.toLowerCase()) || null;
+              if (!targetDeck) {
+                targetDeck = await window.DB.createDeck(deckName);
+                this.state.decks.push(targetDeck);
+              }
+            } else {
+              targetDeck = this.state.decks.find((item) => item.id === fallbackDeckId) || null;
+              if (!targetDeck && fallbackDeckId === 'default') {
+                targetDeck = this.state.decks.find((item) => item.name.toLowerCase() === window.DB.DEFAULT_DECK_NAME.toLowerCase()) || null;
+              }
+              if (!targetDeck) throw new Error('Could not resolve the target deck for CSV import.');
             }
             deckId = targetDeck.id;
           }
@@ -840,26 +876,87 @@
         }
 
         const deduped = await window.Importer.detectImportDuplicates(resolvedRows, defaultDeckId);
-        const cardsToCreate = deduped.accepted.map((row) => ({
-          ...window.Scheduler.newCardDefaults(),
-          id: window.DB.id('card'),
-          deckId: row.deckId,
-          question: row.question,
-          answer: row.answer,
-          tags: row.tags,
-          frontImageIds: [],
-          backImageIds: [],
-          createdAt: window.DB.nowISO(),
-          updatedAt: window.DB.nowISO(),
-        }));
+        let mediaIdByName = new Map();
+        const extraSkipped = [];
+
+        if (parsed.fileType === 'apkg' && typeof parsed.loadMediaFiles === 'function') {
+          const requestedMediaNames = [...new Set(deduped.accepted.flatMap((row) => [
+            ...(row.frontImageNames || []),
+            ...(row.backImageNames || []),
+          ]))];
+
+          if (requestedMediaNames.length) {
+            window.UI.renderImportSummary({
+              title: 'Importing .apkg media...',
+              copy: `Preparing ${requestedMediaNames.length} referenced image${requestedMediaNames.length === 1 ? '' : 's'}.`,
+            });
+            const { mediaFiles, missing } = await parsed.loadMediaFiles(requestedMediaNames, (msg) => {
+              window.UI.renderImportSummary({ title: msg, copy: 'Only images still needed after duplicate filtering are being extracted.' });
+            });
+            const createdMedia = await window.DB.bulkCreateMedia(mediaFiles.map((item) => ({
+              name: item.name,
+              type: item.type,
+              size: item.size,
+              blob: new Blob([item.data], { type: item.type }),
+            })));
+            mediaIdByName = new Map(createdMedia.map((item) => [item.name, item.id]));
+
+            if (missing.length) {
+              missing.forEach((item) => extraSkipped.push(`Media "${item.name}": ${item.reason}`));
+            }
+          }
+        }
+
+        const resolveMediaId = (name) => {
+          const raw = String(name || '').trim();
+          if (!raw) return '';
+          if (mediaIdByName.has(raw)) return mediaIdByName.get(raw);
+          let decoded = raw;
+          try { decoded = decodeURIComponent(raw); } catch (_) {}
+          if (mediaIdByName.has(decoded)) return mediaIdByName.get(decoded);
+          const trimmed = decoded.replace(/^\.?[\\/]+/, '');
+          if (mediaIdByName.has(trimmed)) return mediaIdByName.get(trimmed);
+          const basename = trimmed.split(/[\\/]/).pop() || trimmed;
+          return mediaIdByName.get(basename) || '';
+        };
+
+        const cardsToCreate = deduped.accepted.map((row) => {
+          const frontImageIds = (row.frontImageNames || [])
+            .map((name) => resolveMediaId(name))
+            .filter(Boolean);
+          const backImageIds = (row.backImageNames || [])
+            .map((name) => resolveMediaId(name))
+            .filter(Boolean);
+          const frontOk = row.question !== '[image]' || frontImageIds.length > 0;
+          const backOk = row.answer !== '[image]' || backImageIds.length > 0;
+          if (!frontOk || !backOk) {
+            extraSkipped.push(`Row ${row.row}: missing required image media for an image-only card side.`);
+            return null;
+          }
+          return {
+            ...window.Scheduler.newCardDefaults(),
+            id: window.DB.id('card'),
+            deckId: row.deckId,
+            question: row.question,
+            answer: row.answer,
+            tags: row.tags,
+            cardType: row.cardType || 'basic',
+            frontImageIds,
+            backImageIds,
+            createdAt: window.DB.nowISO(),
+            updatedAt: window.DB.nowISO(),
+          };
+        }).filter(Boolean);
         if (cardsToCreate.length) await window.DB.bulkCreateCards(cardsToCreate);
         await this.refreshBaseData();
         await this.renderManageView();
+        const formatLabel = parsed.fileType === 'apkg' ? '.apkg' : parsed.fileType === 'tsv' ? 'TSV' : parsed.fileType === 'csv' ? 'CSV' : 'TXT';
         window.UI.renderImportSummary({
-          title: `Imported ${cardsToCreate.length} card${cardsToCreate.length === 1 ? '' : 's'}.`,
-          copy: `Skipped ${parsed.skipped.length} invalid row(s) and ${deduped.duplicates.length} duplicate(s).`,
+          title: `Imported ${cardsToCreate.length} card${cardsToCreate.length === 1 ? '' : 's'} from ${formatLabel}.`,
+          copy: `Skipped ${parsed.skipped.length + extraSkipped.length} invalid row(s) and ${deduped.duplicates.length} duplicate(s).${parsed.fileType === 'apkg' ? ` Imported ${mediaIdByName.size} image${mediaIdByName.size === 1 ? '' : 's'}.` : ''}`,
           details: [
             ...(parsed.skipped.length ? parsed.skipped.map((item) => `Row ${item.row}: ${item.reason}`) : []),
+            ...extraSkipped,
             ...(deduped.duplicates.length ? deduped.duplicates.map((item) => `Duplicate: ${item.question.slice(0, 60)}`) : []),
           ].join('\n'),
         });
@@ -874,7 +971,7 @@
 
     async handleExportBackup() {
       try {
-        window.UI.renderBackupSummary('Building backup…');
+        window.UI.renderBackupSummary('Building backup...');
         const json = await window.Importer.exportBackup();
         const stamp = new Date().toISOString().replace(/[:.]/g, '-');
         window.Importer.downloadFile(`offline-flashcards-v5-backup-${stamp}.json`, json, 'application/json');
@@ -1029,17 +1126,31 @@
         this.resetReviewAndEditorState();
         await this.loadSettings();
         await this.refreshBaseData();
-        await this.switchView('dashboard');
+        await this.switchView('study');
         window.UI.toast('All data removed.', 'success');
       } catch (error) {
         window.UI.toast(error.message || 'Could not delete data.', 'error');
       }
     },
 
+    wrapAsCloze() {
+      const textarea = document.getElementById('card-question');
+      if (!textarea) return;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+      const selected = text.slice(start, end).trim() || 'answer';
+      const wrapped = `{{c1::${selected}}}`;
+      textarea.value = text.slice(0, start) + wrapped + text.slice(end);
+      textarea.selectionStart = start + wrapped.length;
+      textarea.selectionEnd = start + wrapped.length;
+      textarea.focus();
+    },
+
     handleGlobalKeys(event) {
       const activeTag = document.activeElement?.tagName?.toLowerCase();
       if (['input', 'textarea', 'select'].includes(activeTag)) return;
-      if (this.state.currentView !== 'review') return;
+      if (this.state.currentView !== 'study') return;
       const session = this.state.reviewSession;
       if (event.code === 'KeyZ' && session.lastReviewAction && !session.busy) {
         event.preventDefault();

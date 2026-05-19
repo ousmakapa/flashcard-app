@@ -92,10 +92,10 @@
     const statRoot = document.getElementById('dashboard-stat-cards');
     statRoot.innerHTML = [
       ['Total cards', snapshot.totalCards],
-      ['New', snapshot.totalNew],
+      ['Unseen', snapshot.totalNew],
       ['Learning', snapshot.totalLearning],
-      ['Relearning', snapshot.totalRelearning],
-      ['Review', snapshot.totalReview],
+      ['Re-learning', snapshot.totalRelearning],
+      ['Graduated', snapshot.totalReview],
       ['Mastery', `${snapshot.totalMastery.toFixed(0)}%`],
       ['Decks', snapshot.deckCount],
     ].map(([label, value]) => `<div class="stat-card"><span class="stat-label">${esc(label)}</span><strong>${esc(value)}</strong></div>`).join('');
@@ -106,25 +106,28 @@
         <div class="get-started-panel">
           <div class="onboarding-icon">&#x1F393;</div>
           <h3 style="margin:0 0 6px">Welcome to Ankur!</h3>
-          <p style="color:var(--text-soft);margin:0 0 4px">You have no cards yet. Here's how to get started:</p>
+          <p style="color:var(--text-soft);margin:0 0 18px">You have no cards yet. Follow these steps to get started in under 5 minutes:</p>
           <div class="get-started-steps">
             <div class="get-started-step">
               <div class="get-started-step-num">1</div>
-              <h4>Import a PDF</h4>
-              <p>Go to Import → use AI to generate cards from your lecture PDFs</p>
+              <h4>Save your API key</h4>
+              <p>Go to <strong>Settings</strong> and paste your OpenAI API key. Get a free one at platform.openai.com → API keys.</p>
             </div>
             <div class="get-started-step">
               <div class="get-started-step-num">2</div>
-              <h4>Study daily</h4>
-              <p>Tap Study now and rate each card — the app schedules reviews for you</p>
+              <h4>Import a PDF</h4>
+              <p>Go to <strong>Import</strong> → scroll to <em>Import from PDF</em>. Upload a lecture PDF and AI generates Easy / Medium / Hard cards for you.</p>
             </div>
             <div class="get-started-step">
               <div class="get-started-step-num">3</div>
-              <h4>Track progress</h4>
-              <p>Watch your mastery grow in the Stats tab</p>
+              <h4>Study daily</h4>
+              <p>Tap <strong>Study now</strong> and rate each card honestly. The app schedules the next review automatically — no planning needed.</p>
             </div>
           </div>
-          <button class="btn btn-primary" onclick="document.querySelector('[data-view=import]').click()">Go to Import</button>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="document.querySelector('[data-view=import]').click()">Go to Import</button>
+            <button class="btn btn-secondary" onclick="document.querySelector('[data-view=settings]').click()">Go to Settings</button>
+          </div>
         </div>`;
       return;
     }

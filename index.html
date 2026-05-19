@@ -51,7 +51,7 @@
             <div>
               <div class="eyebrow">Today at a glance</div>
               <h2 id="dashboard-hero-heading">Pick up where you left off.</h2>
-              <p id="dashboard-hero-copy">Due cards, deck health, and recent activity all here.</p>
+              <p id="dashboard-hero-copy">Ankur uses spaced repetition — each card reappears just before you'd forget it. Review your due cards every day, even 10 minutes at a time, and your memory compounds.</p>
             </div>
             <div class="hero-actions">
               <div class="metric-chip">
@@ -66,6 +66,7 @@
             </div>
           </div>
           <div class="stat-strip" id="dashboard-stat-cards"></div>
+          <p class="metric-legend">Unseen = never studied &nbsp;·&nbsp; Learning = in progress &nbsp;·&nbsp; Re-learning = missed and studying again &nbsp;·&nbsp; Graduated = on long-term intervals &nbsp;·&nbsp; Mastery = % graduated</p>
           <div class="panel">
             <div class="panel-head">
               <div>
@@ -85,7 +86,7 @@
                 <div class="eyebrow">Review setup</div>
                 <h3>Start a focused session</h3>
               </div>
-              <p class="panel-copy">Learning and relearning cards appear first. New cards respect your daily limit.</p>
+              <p class="panel-copy">Learning and relearning cards appear first. New cards respect your daily limit. Pick a specific deck to focus on one subject, or choose "All due cards" to review everything at once.</p>
             </div>
             <div class="review-setup-grid">
               <label>
@@ -104,9 +105,10 @@
               <span class="pill" id="review-scope-today-pill">Due today: 0</span>
               <span class="pill" id="review-scope-hidden-pill">Hidden new: 0</span>
             </div>
+            <p class="metric-legend" style="margin-top:8px"><strong>Due now</strong> = ready to review right now &nbsp;·&nbsp; <strong>Due today</strong> = includes cards due later today &nbsp;·&nbsp; <strong>Hidden new</strong> = new cards past your daily limit</p>
             <div class="review-setup-actions">
               <button id="start-review-btn" class="btn btn-primary btn-large">Start review</button>
-              <p class="subtle-note">Space shows the answer. 1-4 rate the card. Z undoes the last rating.</p>
+              <p class="subtle-note">Keyboard: <strong>Space</strong> shows the answer &nbsp;·&nbsp; <strong>1</strong> Again &nbsp;<strong>2</strong> Hard &nbsp;<strong>3</strong> Good &nbsp;<strong>4</strong> Easy &nbsp;·&nbsp; <strong>Z</strong> undo</p>
             </div>
           </div>
 
@@ -155,7 +157,7 @@
                 <button id="edit-current-card-btn"    class="btn btn-secondary" disabled>Edit</button>
                 <button id="end-review-btn"           class="btn btn-ghost">End session</button>
               </div>
-              <div class="shortcut-hint">Space = show answer - 1 2 3 4 = rate - Z = undo</div>
+              <div class="shortcut-hint">Space = show answer &nbsp;·&nbsp; 1 Again &nbsp;2 Hard &nbsp;3 Good &nbsp;4 Easy &nbsp;·&nbsp; Z = undo</div>
             </div>
           </div>
 
@@ -197,6 +199,7 @@
               <div>
                 <div class="eyebrow">Card editor</div>
                 <h3 id="card-form-title">Add card</h3>
+                <p class="panel-copy" style="margin:4px 0 0">Type a question (front) and answer (back), pick a deck, then click Save. Drag or paste images into the dropzone below each field.</p>
               </div>
             </div>
             <form id="card-form" class="stack-form">
@@ -303,6 +306,7 @@
               <div>
                 <div class="eyebrow">Library</div>
                 <h3>All cards</h3>
+                <p class="panel-copy" style="margin:4px 0 0">Browse, search, and manage all your cards. Tick checkboxes to select cards, then use the bulk bar to move, suspend, or delete them at once.</p>
               </div>
             </div>
             <div class="toolbar toolbar-grid">
@@ -356,6 +360,7 @@
               <div>
                 <div class="eyebrow">New deck</div>
                 <h3>Create a deck</h3>
+                <p class="panel-copy" style="margin:4px 0 0">Decks organize your cards by subject — e.g. "Anatomy" or "Pharmacology". Create one deck per course or topic.</p>
               </div>
             </div>
             <form id="create-deck-form" class="stack-form">
@@ -371,6 +376,7 @@
               <div>
                 <div class="eyebrow">Existing decks</div>
                 <h3>Manage decks</h3>
+                <p class="panel-copy" style="margin:4px 0 0">Rename or delete a deck. Deleting gives you the choice to move its cards to Default or remove them too.</p>
               </div>
             </div>
             <div id="deck-list" class="deck-list"></div>
@@ -434,7 +440,21 @@
               <div class=”eyebrow”>AI card generation</div>
               <h3>Import from PDF</h3>
             </div>
-            <p class=”panel-copy”>Upload a PDF and OpenAI will generate <strong>Easy / Medium / Hard</strong> flashcards. Requires an OpenAI API key saved in Settings.</p>
+            <p class=”panel-copy”>Upload a PDF and OpenAI will generate <strong>Easy / Medium / Hard</strong> flashcards automatically. Needs internet and an OpenAI API key (a few US cents per PDF).</p>
+          </div>
+          <div class=”step-flow”>
+            <div class=”step-flow-item”>
+              <div class=”step-flow-num”>1</div>
+              <div><strong>Get an API key</strong> — Go to <strong>Settings</strong>, paste your OpenAI key and save. Get a free key at <strong>platform.openai.com → API keys</strong>. Your key stays on this device only.</div>
+            </div>
+            <div class=”step-flow-item”>
+              <div class=”step-flow-num”>2</div>
+              <div><strong>Choose a PDF &amp; deck</strong> — Must be a text-based PDF (typed lecture notes, slides). Scanned image-only PDFs won't work. Pick an existing deck or type a new deck name below.</div>
+            </div>
+            <div class=”step-flow-item”>
+              <div class=”step-flow-num”>3</div>
+              <div><strong>Review &amp; add cards</strong> — Check the generated cards, use the Easy / Medium / Hard filters to focus, un-tick any you don't want, then click Add to save them.</div>
+            </div>
           </div>
           <div class=”stack-form”>
             <label>PDF file<input id=”pdf-file” type=”file” accept=”.pdf,application/pdf” /></label>
@@ -481,6 +501,7 @@
             <div>
               <div class="eyebrow">Study progress</div>
               <h3>Daily activity</h3>
+              <p class="panel-copy" style="margin:4px 0 0">Your review history over the last 14 days. Consistent daily sessions — even short ones — build lasting memory.</p>
             </div>
           </div>
           <div id="stats-top-strip" class="stat-strip"></div>
@@ -536,10 +557,12 @@
                 New cards per day
                 <input id="new-cards-per-day" type="number" min="0" step="1" />
               </label>
+              <p class="field-hint">How many brand-new (never-seen) cards to introduce per day. 20 is a good default — lower it if sessions feel too long.</p>
               <label>
                 OpenAI API key
                 <input id="openai-api-key" type="password" placeholder="sk-..." autocomplete="off" />
               </label>
+              <p class="field-hint">Required for PDF → AI flashcard generation. Stays on your device only — never shared. Get a free key at <strong>platform.openai.com → API keys</strong>.</p>
               <button id="save-settings-btn" class="btn btn-primary">Save settings</button>
             </div>
           </div>

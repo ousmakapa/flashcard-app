@@ -878,3 +878,42 @@ body.dark-theme .difficulty-hard   { background: rgba(248,113,113,.15); color: #
   font-size: 13px;
 }
 .pdf-action-row { margin-top: 1rem; }
+
+/* ── Step-by-step flow guide ────────────────────────── */
+.step-flow { display: grid; gap: 10px; margin: 4px 0 20px; }
+.step-flow-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 0.93rem;
+  color: var(--text-soft);
+  line-height: 1.55;
+}
+.step-flow-num {
+  flex-shrink: 0;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 2px;
+}
+.step-flow-item strong { color: var(--text); }
+
+/* ── Inline field hints ─────────────────────────────── */
+.field-hint {
+  margin: -6px 0 4px;
+  font-size: 0.82rem;
+  color: var(--text-faint);
+  line-height: 1.5;
+}
+
+/* ── Metric legend ──────────────────────────────────── */
+.metric-legend {
+  font-size: 0.79rem;
+  color: var(--text-faint);
+  line-height: 1.55;
+  padding: 0 2px;
+}

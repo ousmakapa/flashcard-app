@@ -1114,10 +1114,14 @@
       const newDeckName = document.getElementById('pdf-new-deck-name').value.trim();
       let deckId = document.getElementById('pdf-deck-select').value || '';
       if (newDeckName) {
-        const deck = await window.DB.createDeck(newDeckName);
-        deckId = deck.id;
-        await this.refreshBaseData();
-        document.getElementById('pdf-new-deck-name').value = '';
+        try {
+          const deck = await window.DB.createDeck(newDeckName);
+          deckId = deck.id;
+          await this.refreshBaseData();
+          document.getElementById('pdf-new-deck-name').value = '';
+        } catch (err) {
+          return window.UI.toast(err.message || 'Could not create deck.', 'error');
+        }
       }
       if (!deckId) return window.UI.toast('Choose or create a target deck.', 'error');
 

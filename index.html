@@ -396,10 +396,13 @@
               <p class="panel-copy">Supports <strong>.apkg</strong> (Anki), <strong>.csv</strong> (<code>front,back,deck,tags</code>), <strong>.tsv</strong> (Anki plain text), and <strong>.txt</strong> (<code>front;back</code>). Duplicates skipped automatically.</p>
             </div>
             <form id="import-form" class="stack-form">
-              <label>
-                Source file
-                <input id="import-file" type="file" accept=".apkg,.csv,.tsv,.txt,application/zip,text/plain,text/csv,text/tab-separated-values" required />
-              </label>
+              <div class="file-pick-wrap">
+                <label class="file-pick-label" for="import-file">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <span id="import-file-label-text">Choose source file</span>
+                </label>
+                <input id="import-file" type="file" accept=".apkg,.csv,.tsv,.txt,application/zip,text/plain,text/csv,text/tab-separated-values" />
+              </div>
               <label>
                 Target deck (TXT, TSV, and .apkg)
                 <select id="import-deck-select"></select>
@@ -428,7 +431,13 @@
             <div class="summary-box danger-box">
               <h4>Restore backup</h4>
               <p class="panel-copy">Validated before replacement and runs atomically. A safety backup is downloaded first.</p>
-              <input id="import-backup-file" type="file" accept=".json,application/json" />
+              <div class="file-pick-wrap">
+                <label class="file-pick-label" for="import-backup-file">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <span id="import-backup-file-label-text">Choose backup file (.json)</span>
+                </label>
+                <input id="import-backup-file" type="file" accept=".json,application/json" />
+              </div>
               <button id="import-backup-btn" class="btn btn-danger">Restore backup</button>
             </div>
             <div id="backup-summary" class="summary-box muted-box">No backup operation run yet.</div>

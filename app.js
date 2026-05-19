@@ -155,12 +155,34 @@
       document.getElementById('pdf-generate-btn').addEventListener('click', () => this.handlePdfImport());
       document.getElementById('pdf-file').addEventListener('change', (e) => {
         const label = document.getElementById('pdf-file-label-text');
-        const wrap = document.querySelector('.file-pick-label');
+        const wrap = e.target.closest('.file-pick-wrap').querySelector('.file-pick-label');
         if (e.target.files[0]) {
           label.textContent = e.target.files[0].name;
           wrap.classList.add('has-file');
         } else {
           label.textContent = 'Choose PDF file';
+          wrap.classList.remove('has-file');
+        }
+      });
+      document.getElementById('import-file').addEventListener('change', (e) => {
+        const label = document.getElementById('import-file-label-text');
+        const wrap = e.target.closest('.file-pick-wrap').querySelector('.file-pick-label');
+        if (e.target.files[0]) {
+          label.textContent = e.target.files[0].name;
+          wrap.classList.add('has-file');
+        } else {
+          label.textContent = 'Choose source file';
+          wrap.classList.remove('has-file');
+        }
+      });
+      document.getElementById('import-backup-file').addEventListener('change', (e) => {
+        const label = document.getElementById('import-backup-file-label-text');
+        const wrap = e.target.closest('.file-pick-wrap').querySelector('.file-pick-label');
+        if (e.target.files[0]) {
+          label.textContent = e.target.files[0].name;
+          wrap.classList.add('has-file');
+        } else {
+          label.textContent = 'Choose backup file (.json)';
           wrap.classList.remove('has-file');
         }
       });
@@ -1025,6 +1047,8 @@
           ].join('\n'),
         });
         fileInput.value = '';
+        document.getElementById('import-file-label-text').textContent = 'Choose source file';
+        fileInput.closest('.file-pick-wrap').querySelector('.file-pick-label').classList.remove('has-file');
         document.getElementById('import-new-deck-name').value = '';
         window.UI.toast('Import complete.', 'success');
       } catch (error) {
@@ -1068,6 +1092,10 @@
         this.resetReviewAndEditorState();
         window.UI.renderBackupSummary(`Restore complete. ${result.cards} cards, ${result.reviewLogs} logs, ${result.media} images restored.`, 'success');
         window.UI.toast('Restore complete.', 'success');
+        const bkInput = document.getElementById('import-backup-file');
+        bkInput.value = '';
+        document.getElementById('import-backup-file-label-text').textContent = 'Choose backup file (.json)';
+        bkInput.closest('.file-pick-wrap').querySelector('.file-pick-label').classList.remove('has-file');
       } catch (error) {
         window.UI.renderBackupSummary(error.message || 'Restore failed.', 'error');
         window.UI.toast(error.message || 'Restore failed.', 'error');
